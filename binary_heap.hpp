@@ -5,7 +5,7 @@
 #include <iostream>
 
 template<typename T>
-class TraitsSentinel;
+struct TraitsSentinel;
 
 // Class representing binary heap with user specified key type and value type
 template <typename TKey, typename TValue>
@@ -18,20 +18,27 @@ class BinaryHeap {
         BinaryHeap(std::size_t max_size);
         TValue extractMax();
         const TValue& getMax() const;
-        void insert(TKey key, TValue value);
-        void replace(TIndex prev_idx, TKey new_key, TValue value);
+        //void insert(TKey key, TValue value);
+        //TValue& insert(TKey key, TValue value);
+        TIndex insert(TKey key, TValue value);
+        TValue& operator [] (TIndex index);
+        const TValue& operator [] (TIndex index) const;
+        TIndex replace(TIndex prev_idx, TKey new_key, TValue value);
+        void remove(TIndex idx);
         void debugPrint() const;
         const std::vector<TKey>& getKeys() const;
         const std::vector<TValue>& getValues() const;
         int getSize() const;
         int getMaxSize() const;
     private:
-        void heapify(TIndex idx);
+        void heapifyDown(TIndex idx);
+        TIndex heapifyUp(TIndex idx);
         TIndex increaseKey(TKey new_key, TIndex idx);
         void swapElements(TIndex a, TIndex b);
         TIndex getParentIndex(TIndex idx);
         TIndex getLeftIndex(TIndex idx);
         TIndex getRightIndex(TIndex idx);
+        TValue deleteElement(TIndex idx);
 
         std::size_t heap_size_;
         std::size_t max_heap_size_;
@@ -47,24 +54,10 @@ BinaryHeap<TKey, TValue>::BinaryHeap(std::size_t max_size) :
     values_(max_heap_size_) {}
 
 template<typename TKey, typename TValue>
-TValue BinaryHeap<TKey, TValue>::extractMax() {
-    assert(heap_size_ >= 1);
-    
-    swapElements(0, heap_size_ - 1);
-    TValue max = values_[heap_size_ - 1];
-    // debug mode
-    values_[heap_size_ - 1] = TValue();
-    keys_[heap_size_ - 1] = TKey();
-    heapify(0);
-    heap_size_--;
-    return max;
-}
-
-template<typename TKey, typename TValue>
 const TValue& BinaryHeap<TKey, TValue>::getMax() const{
     assert(heap_size_ >= 1);
     
-    return values[0];
+    return values_[0];
 }
 
 template<typename TKey, typename TValue>
@@ -76,13 +69,13 @@ typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::getParentInd
 
 template<typename TKey, typename TValue>
 typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::getLeftIndex(TIndex idx) {
-    assert(idx >= 0 && idx < heap_size_);
+    assert(idx == 0 || (idx > 0 && idx < heap_size_));
     return (idx << 1) + 1;
 }
 
 template<typename TKey, typename TValue>
 typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::getRightIndex(TIndex idx) {
-    assert(idx >= 0 && idx < heap_size_);
+    assert(idx == 0 || (idx > 0 && idx < heap_size_));
     return (idx << 1) + 2;
 }
 
@@ -120,39 +113,72 @@ const std::vector<TValue>& BinaryHeap<TKey, TValue>::getValues() const {
 }
 
 template<typename TKey, typename TValue>
-void BinaryHeap<TKey, TValue>::heapify(TIndex idx) {
+TValue& BinaryHeap<TKey, TValue>::operator [] (TIndex idx) {
     assert(idx >= 0 && idx < heap_size_);
+    // just as an experiment
+    return const_cast<TValue&>(static_cast<const BinaryHeap<TKey, TValue>&>(*this)[idx]);
+}
+
+template<typename TKey, typename TValue>
+const TValue& BinaryHeap<TKey, TValue>::operator [] (TIndex idx) const {
+    assert(idx >= 0 && idx < heap_size_);
+    return values_[idx];
+}
+
+template<typename TKey, typename TValue>
+void BinaryHeap<TKey, TValue>::heapifyDown(TIndex idx) {
+    assert(idx == 0 || (idx > 0 && idx < heap_size_));
 
     TIndex left_idx = getLeftIndex(idx);
     TIndex right_idx = getRightIndex(idx);
     TIndex max_idx = idx;
 
-    if (left_idx <= heap_size_ && keys_[left_idx] > keys_[idx]) {
+    if (left_idx < heap_size_ && keys_[max_idx] < keys_[left_idx]) {
         max_idx = left_idx;
     }
-    if (right_idx <= heap_size_ && keys_[right_idx] > keys_[idx]) {
-        max_idx = left_idx;
+    if (right_idx < heap_size_ && keys_[max_idx] < keys_[right_idx]) {
+        max_idx = right_idx;
     }
     if (max_idx != idx) {
         swapElements(idx, max_idx);
-        heapify(max_idx);
+        assert(max_idx >= 0 && max_idx < heap_size_);
+        heapifyDown(max_idx);
     }
 }
 
+//template<typename TKey, typename TValue>
+//void BinaryHeap<TKey, TValue>::insert(TKey key, TValue value) {
+//    insert(key, value);
+//}
+//
+//template<typename TKey, typename TValue>
+//TValue& BinaryHeap<TKey, TValue>::insert(TKey key, TValue value) {
+//    assert(heap_size_ + 1 <= max_heap_size_);
+//
+//    keys_[heap_size_] = TraitsSentinel<TKey>::getMinusSentinel();
+//    TIndex new_idx = increaseKey(key, heap_size_);
+//    assert(new_idx >= 0 && new_idx < max_heap_size_);
+//
+//    ++heap_size_;
+//    values_[new_idx] = value;
+//    return values_[new_idx];
+//}
+
 template<typename TKey, typename TValue>
-void BinaryHeap<TKey, TValue>::insert(TKey key, TValue value) {
+typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::insert(TKey key, TValue value) {
     assert(heap_size_ + 1 <= max_heap_size_);
 
-    keys_[heap_size_] = TraitsSentinel<TKey>::MINUS_SENTINEL;
+    keys_[heap_size_] = TraitsSentinel<TKey>::getMinusSentinel();
     TIndex new_idx = increaseKey(key, heap_size_);
     assert(new_idx >= 0 && new_idx < max_heap_size_);
 
-    values_[new_idx] = value;
     ++heap_size_;
+    values_[new_idx] = value;
+    return new_idx;
 }
 
 template<typename TKey, typename TValue>
-void BinaryHeap<TKey, TValue>::replace(TIndex prev_idx, 
+typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::replace(TIndex prev_idx, 
                                        TKey new_key, 
                                        TValue value) {
     assert(prev_idx >= 0 && prev_idx < heap_size_);
@@ -160,24 +186,50 @@ void BinaryHeap<TKey, TValue>::replace(TIndex prev_idx,
     TIndex idx = increaseKey(new_key, prev_idx);
     assert(idx >= 0 && idx < max_heap_size_);
 
-    values_[idx] = value;
+    return idx;
+}
+
+
+
+
+template<typename TKey, typename TValue>
+TValue BinaryHeap<TKey, TValue>::extractMax() {
+    assert(heap_size_ >= 1);
+    
+    TValue max = values_[0];
+    deleteElement(0);
+    heapifyDown(0);
+    return max;
+}
+
+template<typename TKey, typename TValue>
+void BinaryHeap<TKey, TValue>::remove(TIndex idx) {
+    assert(idx >= 0 && idx < heap_size_);
+    assert(heap_size_ >= 1);
+    
+    deleteElement(idx);
+
+    idx = heapifyUp(idx);
+    assert(idx >= 0 && idx < heap_size_);
+    heapifyDown(idx);
 }
 
 template<typename TKey, typename TValue>
 typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::increaseKey(TKey new_key, TIndex idx) {
     assert(idx >= 0 && idx < max_heap_size_);
-    assert(keys_[idx] <= new_key);
+    assert(keys_[idx] < new_key);
 
     keys_[idx] = new_key;
-    TIndex parent_idx = getParentIndex(idx);
-
-    while(idx > 0 && keys_[parent_idx] < keys_[idx]) {
-        swapElements(idx, parent_idx);
-        idx = parent_idx;
-        parent_idx = getParentIndex(idx);
-    }
-
+    idx = heapifyUp(idx);
     return idx;
+}
+
+template<typename TKey, typename TValue>
+TValue BinaryHeap<TKey, TValue>::deleteElement(TIndex idx) {
+    swapElements(idx, heap_size_ - 1);
+    values_[heap_size_ - 1] = TValue();
+    keys_[heap_size_ - 1] = TKey();
+    --heap_size_;
 }
 
 template<typename TKey, typename TValue>
@@ -190,5 +242,17 @@ void BinaryHeap<TKey, TValue>::debugPrint() const {
         std::cout << *v_it << '\t';
     }
     std::cout << "\n";
+}
+
+template<typename TKey, typename TValue>
+typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::heapifyUp(TIndex idx) {
+    TIndex parent_idx = getParentIndex(idx);
+
+    while(idx > 0 && keys_[parent_idx] < keys_[idx]) {
+        swapElements(idx, parent_idx);
+        idx = parent_idx;
+        parent_idx = getParentIndex(idx);
+    }
+    return idx;
 }
 
