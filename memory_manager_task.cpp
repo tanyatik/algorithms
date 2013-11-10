@@ -1,4 +1,203 @@
-#include "binary_heap.hpp"
+#include <vector>
+#include <iostream>
+#include <algorithm>
+
+template<typename T>
+struct TraitsSentinel;
+
+// Class representing binary heap with user specified key type and value type
+template <typename TKey, typename TValue>
+class BinaryHeap {
+    public:
+        typedef long long TIndex;
+        typedef TKey TKeyType;
+        typedef TValue TValueType;
+
+        explicit BinaryHeap(std::size_t max_size);
+        TValue extractMax();
+        const TValue& getMax() const;
+        TIndex insert(TKey key, TValue value);
+        TValue& operator[] (TIndex index);
+        const TValue& operator[] (TIndex index) const;
+        TIndex replace(TIndex prev_idx, TKey new_key, TValue value);
+        void remove(TIndex idx);
+        void debugPrint() const;
+        const std::vector<TKey>& getKeys() const;
+        const std::vector<TValue>& getValues() const;
+        unsigned int getSize() const;
+        unsigned int getMaxSize() const;
+
+    private:
+        void heapifyDown(TIndex idx);
+        TIndex heapifyUp(TIndex idx);
+        TIndex increaseKey(TKey new_key, TIndex idx);
+        void swapElements(TIndex one, TIndex other);
+        TIndex getParentIndex(TIndex idx);
+        TIndex getLeftIndex(TIndex idx);
+        TIndex getRightIndex(TIndex idx);
+        void deleteElement(TIndex idx);
+
+        unsigned int heap_size_;
+        unsigned int max_heap_size_;
+        std::vector<TKey> keys_;
+        std::vector<TValue> values_;
+};
+
+template<typename TKey, typename TValue>
+BinaryHeap<TKey, TValue>::BinaryHeap(std::size_t max_size) : 
+    heap_size_(0),
+    max_heap_size_(max_size),
+    keys_(max_heap_size_),
+    values_(max_heap_size_) {}
+
+template<typename TKey, typename TValue>
+const TValue& BinaryHeap<TKey, TValue>::getMax() const {
+    return values_[0];
+}
+
+template<typename TKey, typename TValue>
+typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::getParentIndex(TIndex idx) {
+    if (idx <= 0) return -1;
+    return (idx - 1) >> 1;
+}
+
+template<typename TKey, typename TValue>
+typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::getLeftIndex(TIndex idx) {
+    return (idx << 1) + 1;
+}
+
+template<typename TKey, typename TValue>
+typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::getRightIndex(TIndex idx) {
+    return (idx << 1) + 2;
+}
+
+template<typename TKey, typename TValue>
+void BinaryHeap<TKey, TValue>::swapElements(TIndex one, TIndex other) {
+    using std::swap;
+    swap(keys_[one], keys_[other]);
+    swap(values_[one], values_[other]);
+}
+
+template<typename TKey, typename TValue>
+unsigned int BinaryHeap<TKey, TValue>::getSize() const {
+    return heap_size_;
+}
+
+template<typename TKey, typename TValue>
+unsigned int BinaryHeap<TKey, TValue>::getMaxSize() const {
+    return max_heap_size_;
+}
+
+template<typename TKey, typename TValue>
+const std::vector<TKey>& BinaryHeap<TKey, TValue>::getKeys() const {
+    return keys_;
+}
+
+template<typename TKey, typename TValue>
+const std::vector<TValue>& BinaryHeap<TKey, TValue>::getValues() const {
+    return values_;
+}
+
+template<typename TKey, typename TValue>
+TValue& BinaryHeap<TKey, TValue>::operator[] (TIndex idx) {
+    // just as an experiment
+    return const_cast<TValue&>(static_cast<const BinaryHeap<TKey, TValue>&>(*this)[idx]);
+}
+
+template<typename TKey, typename TValue>
+const TValue& BinaryHeap<TKey, TValue>::operator[] (TIndex idx) const {
+    return values_[idx];
+}
+
+template<typename TKey, typename TValue>
+void BinaryHeap<TKey, TValue>::heapifyDown(TIndex idx) {
+    TIndex left_idx = getLeftIndex(idx);
+    TIndex right_idx = getRightIndex(idx);
+    TIndex max_idx = idx;
+
+    if (left_idx < heap_size_ && keys_[max_idx] < keys_[left_idx]) {
+        max_idx = left_idx;
+    }
+    if (right_idx < heap_size_ && keys_[max_idx] < keys_[right_idx]) {
+        max_idx = right_idx;
+    }
+    if (max_idx != idx) {
+        swapElements(idx, max_idx);
+        heapifyDown(max_idx);
+    }
+}
+
+template<typename TKey, typename TValue>
+typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::insert(TKey key, TValue value) {
+    keys_[heap_size_] = TraitsSentinel<TKey>::getMinusSentinel();
+    TIndex new_idx = increaseKey(key, heap_size_);
+
+    ++heap_size_;
+    values_[new_idx] = value;
+    return new_idx;
+}
+
+template<typename TKey, typename TValue>
+typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::replace(TIndex prev_idx, 
+                                       TKey new_key, 
+                                       TValue value) {
+    TIndex idx = increaseKey(new_key, prev_idx);
+
+    return idx;
+}
+
+template<typename TKey, typename TValue>
+TValue BinaryHeap<TKey, TValue>::extractMax() {
+    TValue max = values_[0];
+    deleteElement(0);
+    heapifyDown(0);
+    return max;
+}
+
+template<typename TKey, typename TValue>
+void BinaryHeap<TKey, TValue>::remove(TIndex idx) {
+    deleteElement(idx);
+
+    idx = heapifyUp(idx);
+    heapifyDown(idx);
+}
+
+template<typename TKey, typename TValue>
+typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::increaseKey(TKey new_key, 
+                                                                                TIndex idx) {
+    keys_[idx] = new_key;
+    idx = heapifyUp(idx);
+    return idx;
+}
+
+template<typename TKey, typename TValue>
+void BinaryHeap<TKey, TValue>::deleteElement(TIndex idx) {
+    swapElements(idx, heap_size_ - 1);
+    values_[heap_size_ - 1] = TValue();
+    keys_[heap_size_ - 1] = TKey();
+    --heap_size_;
+}
+
+template<typename TKey, typename TValue>
+void BinaryHeap<TKey, TValue>::debugPrint() const {
+    for (auto k_it = keys_.begin(); k_it != keys_.end(); ++k_it) {
+        k_it->debugPrint();
+        std::cout << '\t';
+    }
+    std::cout << "\n";
+}
+
+template<typename TKey, typename TValue>
+typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::heapifyUp(TIndex idx) {
+    TIndex parent_idx = getParentIndex(idx);
+
+    while (idx > 0 && keys_[parent_idx] < keys_[idx]) {
+        swapElements(idx, parent_idx);
+        idx = parent_idx;
+        parent_idx = getParentIndex(idx);
+    }
+    return idx;
+}
 
 struct MemoryBlock {
     struct KeyT {
@@ -70,7 +269,8 @@ void swap(MemoryBlock &one, MemoryBlock &other) {
 }
 
 void MemoryBlock::debugPrint() const {
-    std::cout << "[" << position << ":" << size << ':' << (free_heap_index == -1 ? 'O' : 'F') << "]";
+    std::cout << "[" << position << ":" << size << ':' 
+        << (free_heap_index == -1 ? 'O' : 'F') << "]";
 }
 
 MemoryBlock::KeyT::KeyT(unsigned int block_size, unsigned int block_position) :
@@ -88,7 +288,9 @@ void MemoryBlock::KeyT::debugPrint() const {
 
 template<>
 struct TraitsSentinel<MemoryBlock::KeyT> {
-    static MemoryBlock::KeyT getMinusSentinel() { return MemoryBlock::KeyT(0, 0); };
+    static MemoryBlock::KeyT getMinusSentinel() { 
+        return MemoryBlock::KeyT(0, 0); 
+    }
 };
 
 class MemoryManager {
@@ -102,8 +304,6 @@ class MemoryManager {
         unsigned int memory_cells_number_;
         unsigned int query_number_;
         unsigned int query_counter_;
-        // debug
-
         std::vector<MemoryBlock> occupied_blocks_;
         typedef BinaryHeap<MemoryBlock::KeyT, MemoryBlock> TFreeBlocksHeap; 
         TFreeBlocksHeap free_blocks_;
@@ -172,17 +372,16 @@ long long MemoryManager::allocate(unsigned int block_size) {
         connectBlocks(&new_free_block, biggest_block.p_next);
     }
     ++query_counter_;
-    return position;
+    return position + 1;
 }
 
 void MemoryManager::deallocate(unsigned int query_number) {
     --query_number;
-    if(query_number >= query_counter_ || query_number < 0)
+    if (query_number >= query_counter_ || query_number < 0)
         return;
     MemoryBlock& occ = occupied_blocks_[query_number]; // occ -- occupied block to free
-    assert(occ.free_heap_index == -1); // not free
 
-    if(isOccupied(occ.p_prev) && isOccupied(occ.p_next)) {
+    if (isOccupied(occ.p_prev) && isOccupied(occ.p_next)) {
         // ... | occ  |  occ | occ | ...
         //               ||     
         //               \/    
@@ -224,8 +423,7 @@ void MemoryManager::deallocate(unsigned int query_number) {
 
         connectBlocks(occ.p_prev, &new_free_block);
         connectBlocks(&new_free_block, free_right.p_next);
-    }
-    else {
+    } else {
         // ... | free  |  occ | free | ...
         //                 ||     
         //                 \/    
@@ -252,18 +450,15 @@ MemoryBlock& MemoryManager::getFreeBlockLinks(TFreeBlocksHeap::TIndex free_idx) 
 }
 
 void MemoryManager::connectBlocks(MemoryBlock *one, MemoryBlock *other) {
-    if(one) {
+    if (one) {
         one->p_next = other;
     }
-    if(other) {
+    if (other) {
         other->p_prev = one;
     }
 }
 
 bool MemoryManager::isOccupied(const MemoryBlock *ptr) const {
-//    if (ptr == &head_) {
-//        return true;
-//    }
     if (ptr) {
         return ptr->free_heap_index == -1;
     } else {
@@ -273,7 +468,7 @@ bool MemoryManager::isOccupied(const MemoryBlock *ptr) const {
 
 void MemoryManager::debugPrint() const {
     MemoryBlock *ptr = head_.p_next;
-    while(ptr) {
+    while (ptr) {
         ptr->debugPrint();
         std::cout << ' ';
         ptr = ptr->p_next;
