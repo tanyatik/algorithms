@@ -23,7 +23,6 @@ struct MemoryBlock {
                 MemoryBlock *p_prev, 
                 MemoryBlock *p_next);
     KeyT getKey() const;
-    bool isOccupied() const;
     void debugPrint() const;
     void swap(MemoryBlock &other);
 };
@@ -42,23 +41,8 @@ MemoryBlock::MemoryBlock(size_t size, size_t position) :
     p_next(nullptr),
     free_heap_index(-1) {}
 
-MemoryBlock::MemoryBlock(size_t size, 
-                         size_t position, 
-                         int free_heap_index, 
-                         MemoryBlock *p_prev, 
-                         MemoryBlock *p_next) :
-    size(size),
-    position(position),
-    p_prev(p_prev), 
-    p_next(p_next),
-    free_heap_index(free_heap_index) {}
-
 MemoryBlock::KeyT MemoryBlock::getKey() const {
     return KeyT(size, position);
-}
-
-bool MemoryBlock::isOccupied() const {
-    return free_heap_index == -1;
 }
 
 void MemoryBlock::swap(MemoryBlock &other) {
@@ -127,6 +111,7 @@ class MemoryManager {
 
         MemoryBlock& getFreeBlockLinks(TFreeBlocksHeap::TIndex free_idx);
         void connectBlocks(MemoryBlock *one, MemoryBlock *other);
+        bool isOccupied(const MemoryBlock *block) const;
 };
 
 MemoryManager::MemoryManager(int memory_cells_number, int query_number) :
@@ -138,7 +123,8 @@ MemoryManager::MemoryManager(int memory_cells_number, int query_number) :
     head_(0, 0) {
     MemoryBlock free_block(memory_cells_number, 0);
     auto idx = free_blocks_.insert(free_block.getKey(), free_block);
-    connectBlocks(&head_, &free_blocks_[idx]);
+    MemoryBlock& new_free_block = getFreeBlockLinks(idx);
+    connectBlocks(&head_, &new_free_block);
 }
 
 int MemoryManager::allocate(int block_size) {
@@ -196,7 +182,7 @@ void MemoryManager::deallocate(int query_number) {
     MemoryBlock& occ = occupied_blocks_[query_number]; // occ -- occupied block to free
     assert(occ.free_heap_index == -1); // not free
 
-    if(occ.p_prev->isOccupied() && occ.p_next->isOccupied()) {
+    if(isOccupied(occ.p_prev) && isOccupied(occ.p_next)) {
         // ... | occ  |  occ | occ | ...
         //               ||     
         //               \/    
@@ -208,7 +194,7 @@ void MemoryManager::deallocate(int query_number) {
         MemoryBlock& new_free_block = getFreeBlockLinks(free_idx);
         connectBlocks(occ.p_prev, &new_free_block);
         connectBlocks(&new_free_block, occ.p_next);
-    } else if (!occ.p_prev->isOccupied() && occ.p_next->isOccupied()) {
+    } else if (!isOccupied(occ.p_prev) && isOccupied(occ.p_next)) {
         // ... | free |  occ | occ | ...
         //               ||     
         //               \/    
@@ -223,7 +209,7 @@ void MemoryManager::deallocate(int query_number) {
 
         connectBlocks(free_left.p_next, &new_free_block);
         connectBlocks(&new_free_block, occ.p_next);
-    } else if (occ.p_prev->isOccupied() && !occ.p_next->isOccupied()) {
+    } else if (isOccupied(occ.p_prev) && !isOccupied(occ.p_next)) {
         // ... | occ  |  occ | free | ...
         //               ||     
         //               \/    
@@ -274,6 +260,17 @@ void MemoryManager::connectBlocks(MemoryBlock *one, MemoryBlock *other) {
     }
 }
 
+bool MemoryManager::isOccupied(const MemoryBlock *ptr) const {
+//    if (ptr == &head_) {
+//        return true;
+//    }
+    if (ptr) {
+        return ptr->free_heap_index == -1;
+    } else {
+        return true;
+    }
+}
+
 void MemoryManager::debugPrint() const {
     MemoryBlock *ptr = head_.p_next;
     while(ptr) {
@@ -285,7 +282,7 @@ void MemoryManager::debugPrint() const {
 }
 
 int main() {
-    MemoryManager manager(1000, 4);
+    MemoryManager manager(1000, 40);
     manager.debugPrint();
     manager.allocate(500);
     manager.debugPrint();
@@ -294,5 +291,15 @@ int main() {
     manager.allocate(125);
     manager.debugPrint();
     manager.deallocate(2);
+    manager.debugPrint();
+    manager.allocate(250);
+    manager.debugPrint();
+    manager.allocate(125);
+    manager.debugPrint();
+    manager.deallocate(1);
+    manager.debugPrint();
+    manager.deallocate(5);
+    manager.debugPrint();
+    manager.allocate(300);
     manager.debugPrint();
 }
