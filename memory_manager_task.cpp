@@ -262,7 +262,7 @@ MemoryBlock::KeyT::KeyT(unsigned int block_size, unsigned int block_position) :
 
 bool MemoryBlock::KeyT::operator <(struct KeyT other) {
     return ((block_size < other.block_size) || 
-            ((block_size == other.block_size) && (block_position < other.block_position)));
+            ((block_size == other.block_size) && (block_position > other.block_position)));
 }
 
 template<>
