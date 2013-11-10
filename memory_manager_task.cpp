@@ -21,7 +21,6 @@ class BinaryHeap {
         const TValue& operator[] (TIndex index) const;
         TIndex replace(TIndex prev_idx, TKey new_key, TValue value);
         void remove(TIndex idx);
-        void debugPrint() const;
         const std::vector<TKey>& getKeys() const;
         const std::vector<TValue>& getValues() const;
         unsigned int getSize() const;
@@ -179,15 +178,6 @@ void BinaryHeap<TKey, TValue>::deleteElement(TIndex idx) {
 }
 
 template<typename TKey, typename TValue>
-void BinaryHeap<TKey, TValue>::debugPrint() const {
-    for (auto k_it = keys_.begin(); k_it != keys_.end(); ++k_it) {
-        k_it->debugPrint();
-        std::cout << '\t';
-    }
-    std::cout << "\n";
-}
-
-template<typename TKey, typename TValue>
 typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::heapifyUp(TIndex idx) {
     TIndex parent_idx = getParentIndex(idx);
 
@@ -206,7 +196,6 @@ struct MemoryBlock {
         
         KeyT(unsigned int block_size = 0, unsigned int block_position = 0);
         bool operator < (struct KeyT other);
-        void debugPrint() const;
     };
     unsigned int size;
     unsigned int position;
@@ -222,7 +211,6 @@ struct MemoryBlock {
                 MemoryBlock *p_prev, 
                 MemoryBlock *p_next);
     KeyT getKey() const;
-    void debugPrint() const;
     void swap(MemoryBlock &other);
 };
 
@@ -268,11 +256,6 @@ void swap(MemoryBlock &one, MemoryBlock &other) {
     one.swap(other);
 }
 
-void MemoryBlock::debugPrint() const {
-    std::cout << "[" << position << ":" << size << ':' 
-        << (free_heap_index == -1 ? 'O' : 'F') << "]";
-}
-
 MemoryBlock::KeyT::KeyT(unsigned int block_size, unsigned int block_position) :
     block_size(block_size),
     block_position(block_position) {}
@@ -280,10 +263,6 @@ MemoryBlock::KeyT::KeyT(unsigned int block_size, unsigned int block_position) :
 bool MemoryBlock::KeyT::operator <(struct KeyT other) {
     return ((block_size < other.block_size) || 
             (block_size == other.block_size && block_position < other.block_position));
-}
-
-void MemoryBlock::KeyT::debugPrint() const {
-    std::cout << block_size << ':' << block_position;
 }
 
 template<>
@@ -299,7 +278,6 @@ class MemoryManager {
 
         long long allocate(unsigned int block_size);
         void deallocate(unsigned int query_number);
-        void debugPrint() const;
     private:
         unsigned int memory_cells_number_;
         unsigned int query_number_;
@@ -307,7 +285,6 @@ class MemoryManager {
         std::vector<MemoryBlock> occupied_blocks_;
         typedef BinaryHeap<MemoryBlock::KeyT, MemoryBlock> TFreeBlocksHeap; 
         TFreeBlocksHeap free_blocks_;
-        MemoryBlock head_;
 
         MemoryBlock& getFreeBlockLinks(TFreeBlocksHeap::TIndex free_idx);
         void connectBlocks(MemoryBlock *one, MemoryBlock *other);
@@ -319,12 +296,10 @@ MemoryManager::MemoryManager(unsigned int memory_cells_number, unsigned int quer
     query_number_(query_number),
     query_counter_(0),
     occupied_blocks_(query_number),
-    free_blocks_(query_number),
-    head_(0, 0) {
+    free_blocks_(query_number) {
     MemoryBlock free_block(memory_cells_number, 0);
     auto idx = free_blocks_.insert(free_block.getKey(), free_block);
     MemoryBlock& new_free_block = getFreeBlockLinks(idx);
-    connectBlocks(&head_, &new_free_block);
 }
 
 long long MemoryManager::allocate(unsigned int block_size) {
@@ -464,16 +439,6 @@ bool MemoryManager::isOccupied(const MemoryBlock *ptr) const {
     } else {
         return true;
     }
-}
-
-void MemoryManager::debugPrint() const {
-    MemoryBlock *ptr = head_.p_next;
-    while (ptr) {
-        ptr->debugPrint();
-        std::cout << ' ';
-        ptr = ptr->p_next;
-    }
-    std::cout << std::endl;
 }
 
 int main() {
