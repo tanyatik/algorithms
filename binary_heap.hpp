@@ -11,7 +11,7 @@ struct TraitsSentinel;
 template <typename TKey, typename TValue>
 class BinaryHeap {
     public:
-        typedef int TIndex;
+        typedef long long TIndex;
         typedef TKey TKeyType;
         typedef TValue TValueType;
 
@@ -28,8 +28,8 @@ class BinaryHeap {
         void debugPrint() const;
         const std::vector<TKey>& getKeys() const;
         const std::vector<TValue>& getValues() const;
-        int getSize() const;
-        int getMaxSize() const;
+        unsigned int getSize() const;
+        unsigned int getMaxSize() const;
     private:
         void heapifyDown(TIndex idx);
         TIndex heapifyUp(TIndex idx);
@@ -40,8 +40,8 @@ class BinaryHeap {
         TIndex getRightIndex(TIndex idx);
         void deleteElement(TIndex idx);
 
-        int heap_size_;
-        int max_heap_size_;
+        unsigned int heap_size_;
+        unsigned int max_heap_size_;
         std::vector<TKey> keys_;
         std::vector<TValue> values_;
 };
@@ -89,13 +89,13 @@ void BinaryHeap<TKey, TValue>::swapElements(TIndex a, TIndex b) {
 }
 
 template<typename TKey, typename TValue>
-int BinaryHeap<TKey, TValue>::getSize() const {
+unsigned int BinaryHeap<TKey, TValue>::getSize() const {
     assert(heap_size_ >= 0 && heap_size_ <= max_heap_size_);
     return heap_size_;
 }
 
 template<typename TKey, typename TValue>
-int BinaryHeap<TKey, TValue>::getMaxSize() const {
+unsigned int BinaryHeap<TKey, TValue>::getMaxSize() const {
     assert(max_heap_size_ >= 0 && heap_size_ >= 0 && heap_size_ <= max_heap_size_);
     return max_heap_size_;
 }
