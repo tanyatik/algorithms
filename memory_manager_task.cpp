@@ -262,7 +262,7 @@ MemoryBlock::KeyT::KeyT(unsigned int block_size, unsigned int block_position) :
 
 bool MemoryBlock::KeyT::operator <(struct KeyT other) {
     return ((block_size < other.block_size) || 
-            (block_size == other.block_size && block_position < other.block_position));
+            ((block_size == other.block_size) && (block_position < other.block_position)));
 }
 
 template<>
@@ -308,6 +308,7 @@ long long MemoryManager::allocate(unsigned int block_size) {
     long long position = free_blocks_.getMax().position + 1;
     if (biggest_block_size < block_size) {
         // no place for such a big block
+        occupied_blocks_[query_counter_].size = 0;
         position = -1;
     } else if (biggest_block_size == block_size) {
         // ... |         free        | ...

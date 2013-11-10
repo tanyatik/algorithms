@@ -123,6 +123,42 @@ TEST(heap_test, removals) {
 
 }
 
+TEST(heap_test, all_operations) {
+    TestHeap h(8);
+    h.debugPrint();
+    h.insert(1000, 0);
+    h.debugPrint();
+    h.extractMax();
+    h.debugPrint();
+    h.insert(1000, 1);
+    h.debugPrint();
+    h.extractMax();
+    h.debugPrint();
+    h.insert(800, 2);
+    h.debugPrint();
+    h.extractMax();
+    h.debugPrint();
+    h.insert(600, 3);
+    h.debugPrint();
+    h.extractMax();
+    h.debugPrint();
+    h.insert(400, 4);
+    h.debugPrint();
+    h.extractMax();
+    h.debugPrint();
+    h.insert(200, 5);
+    h.debugPrint();
+    h.extractMax();
+    h.debugPrint();
+    h.insert(200, 6);
+    h.debugPrint();
+    h.insert(200, 7);
+    h.debugPrint();
+    h.extractMax();
+    h.debugPrint();
+}
+
+
 GTEST_API_ int main(int argc, char **argv) {
     printf("Running main() from gtest_main.cc\n");
     testing::InitGoogleTest(&argc, argv);
