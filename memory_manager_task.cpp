@@ -279,7 +279,7 @@ MemoryBlock::KeyT::KeyT(unsigned int block_size, unsigned int block_position) :
 
 bool MemoryBlock::KeyT::operator <(struct KeyT other) {
     return ((block_size < other.block_size) || 
-            (block_size == other.block_size && block_position < other.block_position));
+            (block_size == other.block_size && block_position > other.block_position));
 }
 
 void MemoryBlock::KeyT::debugPrint() const {
@@ -477,6 +477,31 @@ void MemoryManager::debugPrint() const {
 }
 
 int main() {
+    MemoryManager manager(1000, 10);
+    manager.allocate(1000);
+    manager.debugPrint();
+    manager.deallocate(1);
+    manager.debugPrint();
+    manager.allocate(7000);
+    manager.debugPrint();
+    manager.allocate(200);
+    manager.debugPrint();
+    manager.allocate(200);
+    manager.debugPrint();
+    manager.allocate(200);
+    manager.debugPrint();
+    manager.allocate(200);
+    manager.debugPrint();
+    manager.allocate(200);
+    manager.debugPrint();
+    manager.deallocate(4);
+    manager.debugPrint();
+    manager.deallocate(6);
+    manager.debugPrint();
+    manager.allocate(200);
+    manager.debugPrint();
+
+    /*
     std::ios_base::sync_with_stdio(false);
     unsigned int mem_cells, query_count;
     long long query;
@@ -491,4 +516,5 @@ int main() {
         }
     }
     return 0;
+    */
 }
