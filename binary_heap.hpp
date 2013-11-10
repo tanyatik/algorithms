@@ -38,10 +38,10 @@ class BinaryHeap {
         TIndex getParentIndex(TIndex idx);
         TIndex getLeftIndex(TIndex idx);
         TIndex getRightIndex(TIndex idx);
-        TValue deleteElement(TIndex idx);
+        void deleteElement(TIndex idx);
 
-        std::size_t heap_size_;
-        std::size_t max_heap_size_;
+        int heap_size_;
+        int max_heap_size_;
         std::vector<TKey> keys_;
         std::vector<TValue> values_;
 };
@@ -225,7 +225,7 @@ typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::increaseKey(
 }
 
 template<typename TKey, typename TValue>
-TValue BinaryHeap<TKey, TValue>::deleteElement(TIndex idx) {
+void BinaryHeap<TKey, TValue>::deleteElement(TIndex idx) {
     swapElements(idx, heap_size_ - 1);
     values_[heap_size_ - 1] = TValue();
     keys_[heap_size_ - 1] = TKey();
@@ -235,11 +235,8 @@ TValue BinaryHeap<TKey, TValue>::deleteElement(TIndex idx) {
 template<typename TKey, typename TValue>
 void BinaryHeap<TKey, TValue>::debugPrint() const {
     for(auto k_it = keys_.begin(); k_it != keys_.end(); ++k_it) {
-        std::cout << *k_it << '\t';
-    }
-    std::cout << "\n";
-    for(auto v_it = values_.begin(); v_it != values_.end(); ++v_it) {
-        std::cout << *v_it << '\t';
+        k_it->debugPrint();
+        std::cout << '\t';
     }
     std::cout << "\n";
 }
