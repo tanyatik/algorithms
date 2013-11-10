@@ -2,24 +2,24 @@
 
 struct MemoryBlock {
     struct KeyT {
-        size_t block_size;
-        size_t block_position;
+        unsigned int block_size;
+        unsigned int block_position;
         
-        KeyT(size_t block_size = 0, size_t block_position = 0);
+        KeyT(unsigned int block_size = 0, unsigned int block_position = 0);
         bool operator < (struct KeyT other);
         void debugPrint() const;
     };
-    size_t size;
-    size_t position;
+    unsigned int size;
+    unsigned int position;
     MemoryBlock *p_prev;
     MemoryBlock *p_next;
     int free_heap_index; // stores -1 if block is occupied
 
     MemoryBlock();
-    MemoryBlock(size_t size, size_t position);
-    MemoryBlock(size_t size, 
-                size_t position, 
-                int free_heap_index, 
+    MemoryBlock(unsigned int size, unsigned int position);
+    MemoryBlock(unsigned int size, 
+                unsigned int position, 
+                long long free_heap_index, 
                 MemoryBlock *p_prev, 
                 MemoryBlock *p_next);
     KeyT getKey() const;
@@ -34,7 +34,7 @@ MemoryBlock::MemoryBlock() :
     p_next(nullptr),
     free_heap_index(0) {}
 
-MemoryBlock::MemoryBlock(size_t size, size_t position) :
+MemoryBlock::MemoryBlock(unsigned int size, unsigned int position) :
     size(size),
     position(position),
     p_prev(nullptr), 
@@ -73,7 +73,7 @@ void MemoryBlock::debugPrint() const {
     std::cout << "[" << position << ":" << size << ':' << (free_heap_index == -1 ? 'O' : 'F') << "]";
 }
 
-MemoryBlock::KeyT::KeyT(size_t block_size, size_t block_position) :
+MemoryBlock::KeyT::KeyT(unsigned int block_size, unsigned int block_position) :
     block_size(block_size),
     block_position(block_position) {}
 
@@ -93,15 +93,15 @@ struct TraitsSentinel<MemoryBlock::KeyT> {
 
 class MemoryManager {
     public:
-        MemoryManager(int memory_cells_number, int max_query_number);
+        MemoryManager(unsigned memory_cells_number, unsigned int max_query_number);
 
-        int allocate(int block_size);
-        void deallocate(int query_number);
+        long long allocate(unsigned int block_size);
+        void deallocate(unsigned int query_number);
         void debugPrint() const;
     private:
-        int memory_cells_number_;
-        int query_number_;
-        int query_counter_;
+        unsigned int memory_cells_number_;
+        unsigned int query_number_;
+        unsigned int query_counter_;
         // debug
 
         std::vector<MemoryBlock> occupied_blocks_;
@@ -114,7 +114,7 @@ class MemoryManager {
         bool isOccupied(const MemoryBlock *block) const;
 };
 
-MemoryManager::MemoryManager(int memory_cells_number, int query_number) :
+MemoryManager::MemoryManager(unsigned int memory_cells_number, unsigned int query_number) :
     memory_cells_number_(memory_cells_number),
     query_number_(query_number),
     query_counter_(0),
@@ -127,12 +127,12 @@ MemoryManager::MemoryManager(int memory_cells_number, int query_number) :
     connectBlocks(&head_, &new_free_block);
 }
 
-int MemoryManager::allocate(int block_size) {
+long long MemoryManager::allocate(unsigned int block_size) {
     if (free_blocks_.getSize() < 1) {
         return -1;
     }
-    int biggest_block_size = free_blocks_.getMax().size;
-    int position = free_blocks_.getMax().position;
+    unsigned int biggest_block_size = free_blocks_.getMax().size;
+    unsigned int position = free_blocks_.getMax().position;
     if (biggest_block_size < block_size) {
         // no place for such a big block
         return -1;
@@ -175,7 +175,7 @@ int MemoryManager::allocate(int block_size) {
     return position;
 }
 
-void MemoryManager::deallocate(int query_number) {
+void MemoryManager::deallocate(unsigned int query_number) {
     --query_number;
     if(query_number >= query_counter_ || query_number < 0)
         return;
@@ -282,24 +282,18 @@ void MemoryManager::debugPrint() const {
 }
 
 int main() {
-    MemoryManager manager(1000, 40);
-    manager.debugPrint();
-    manager.allocate(500);
-    manager.debugPrint();
-    manager.allocate(250);
-    manager.debugPrint();
-    manager.allocate(125);
-    manager.debugPrint();
-    manager.deallocate(2);
-    manager.debugPrint();
-    manager.allocate(250);
-    manager.debugPrint();
-    manager.allocate(125);
-    manager.debugPrint();
-    manager.deallocate(1);
-    manager.debugPrint();
-    manager.deallocate(5);
-    manager.debugPrint();
-    manager.allocate(300);
-    manager.debugPrint();
+    std::ios_base::sync_with_stdio(false);
+    unsigned int mem_cells, query_count;
+    long long query;
+    std::cin >> mem_cells >> query_count;
+    MemoryManager manager(mem_cells, query_count);
+    for (unsigned int query_idx = 0; query_idx < query_count; ++query_idx) {
+        std::cin >> query;
+        if (query > 0) {
+            std::cout << manager.allocate((unsigned int) query) << std::endl;
+        } else {
+            manager.deallocate(-query);
+        }
+    }
+    return 0;
 }
