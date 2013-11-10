@@ -289,6 +289,7 @@ class MemoryManager {
         MemoryBlock& getFreeBlockLinks(TFreeBlocksHeap::TIndex free_idx);
         void connectBlocks(MemoryBlock *one, MemoryBlock *other);
         bool isOccupied(const MemoryBlock *block) const;
+        bool notValid(const MemoryBlock &block) const;
 };
 
 MemoryManager::MemoryManager(unsigned int memory_cells_number, unsigned int query_number) :
@@ -299,18 +300,15 @@ MemoryManager::MemoryManager(unsigned int memory_cells_number, unsigned int quer
     free_blocks_(query_number) {
     MemoryBlock free_block(memory_cells_number, 0);
     auto idx = free_blocks_.insert(free_block.getKey(), free_block);
-    MemoryBlock& new_free_block = getFreeBlockLinks(idx);
+    getFreeBlockLinks(idx);
 }
 
 long long MemoryManager::allocate(unsigned int block_size) {
-    if (free_blocks_.getSize() < 1) {
-        return -1;
-    }
     unsigned int biggest_block_size = free_blocks_.getMax().size;
-    unsigned int position = free_blocks_.getMax().position;
+    long long position = free_blocks_.getMax().position + 1;
     if (biggest_block_size < block_size) {
         // no place for such a big block
-        return -1;
+        position = -1;
     } else if (biggest_block_size == block_size) {
         // ... |         free        | ...
         //                ||     
@@ -347,7 +345,7 @@ long long MemoryManager::allocate(unsigned int block_size) {
         connectBlocks(&new_free_block, biggest_block.p_next);
     }
     ++query_counter_;
-    return position + 1;
+    return position;
 }
 
 void MemoryManager::deallocate(unsigned int query_number) {
@@ -355,6 +353,9 @@ void MemoryManager::deallocate(unsigned int query_number) {
     if (query_number >= query_counter_ || query_number < 0)
         return;
     MemoryBlock& occ = occupied_blocks_[query_number]; // occ -- occupied block to free
+    if (notValid(occ)) {
+        return;
+    }
 
     if (isOccupied(occ.p_prev) && isOccupied(occ.p_next)) {
         // ... | occ  |  occ | occ | ...
@@ -439,6 +440,10 @@ bool MemoryManager::isOccupied(const MemoryBlock *ptr) const {
     } else {
         return true;
     }
+}
+
+bool MemoryManager::notValid(const MemoryBlock &block) const {
+    return block.size == 0;
 }
 
 int main() {
