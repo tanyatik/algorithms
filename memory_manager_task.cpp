@@ -174,7 +174,6 @@ typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::increaseKey(
 template<typename TKey, typename TValue>
 void BinaryHeap<TKey, TValue>::deleteElement(TIndex idx) {
     swapElements(idx, heap_size_ - 1);
-    //values_[heap_size_ - 1] = TValue();
     keys_[heap_size_ - 1] = TKey();
     --heap_size_;
 }
@@ -442,7 +441,8 @@ void MemoryManager::deallocate(unsigned int query_number) {
 
         // updating previous free block
         MemoryBlock free_left = *occ.p_prev;
-        MemoryBlock &free_right = *occ.p_next;
+        MemoryBlock free_right = *occ.p_next;
+        free_blocks_.remove(free_right.free_heap_index);
 
         MemoryBlock tmp(free_left.size + occ.size + free_right.size, free_left.position);
         auto new_idx = free_blocks_.replace(free_left.free_heap_index, tmp.getKey(), tmp);
@@ -450,9 +450,6 @@ void MemoryManager::deallocate(unsigned int query_number) {
 
         connectBlocks(free_left.p_prev, &new_free_block);
         connectBlocks(&new_free_block, free_right.p_next);
-        free_right.p_next = nullptr;
-        free_right.p_prev = nullptr;
-        free_blocks_.remove(free_right.free_heap_index);
     }
 }
 
@@ -493,93 +490,64 @@ void MemoryManager::debugPrint() const {
     std::cout << std::endl;
 }
 
-void test() {
-    MemoryManager manager(1000, 30);
-    manager.allocate(100);
-    manager.debugPrint();
-    manager.allocate(100);
-    manager.debugPrint();
-    manager.allocate(100);
-    manager.debugPrint();
-    manager.allocate(100);
-    manager.debugPrint();
-    manager.allocate(100);
-    manager.debugPrint();
-    manager.allocate(100);
-    manager.debugPrint();
-    manager.allocate(100);
-    manager.debugPrint();
-    manager.allocate(100);
-    manager.debugPrint();
-    manager.allocate(100);
-    manager.debugPrint();
-    manager.allocate(100);
-    manager.debugPrint();
-    manager.deallocate(2);
-    manager.debugPrint();
-    manager.deallocate(4);
-    manager.debugPrint();
-    manager.deallocate(6);
-    manager.debugPrint();
-    manager.deallocate(8);
-    manager.debugPrint();
-    manager.deallocate(10);
-    manager.debugPrint();
-    manager.deallocate(1);
-    manager.debugPrint();
-    manager.deallocate(3);
-    manager.debugPrint();
-    manager.deallocate(5);
-    manager.debugPrint();
-    manager.deallocate(7);
-    manager.debugPrint();
-    manager.deallocate(9);
-    manager.debugPrint();
-}
-
+ void test() {
+     MemoryManager manager(1000, 30);
+     manager.allocate(100);
+     manager.debugPrint();
+     manager.allocate(100);
+     manager.debugPrint();
+     manager.allocate(100);
+     manager.debugPrint();
+     manager.allocate(100);
+     manager.debugPrint();
+     manager.allocate(100);
+     manager.debugPrint();
+     manager.allocate(100);
+     manager.debugPrint();
+     manager.allocate(100);
+     manager.debugPrint();
+     manager.allocate(100);
+     manager.debugPrint();
+     manager.allocate(100);
+     manager.debugPrint();
+     manager.allocate(100);
+     manager.debugPrint();
+     manager.deallocate(2);
+     manager.debugPrint();
+     manager.deallocate(4);
+     manager.debugPrint();
+     manager.deallocate(6);
+     manager.debugPrint();
+     manager.deallocate(8);
+     manager.debugPrint();
+     manager.deallocate(10);
+     manager.debugPrint();
+     manager.deallocate(5);
+     manager.debugPrint();
+     manager.deallocate(3);
+     manager.debugPrint();
+     manager.deallocate(7);
+     manager.debugPrint();
+     manager.deallocate(1);
+     manager.debugPrint();
+     manager.deallocate(9);
+     manager.debugPrint();
+ }
 
 int main() {
-//    MemoryManager manager(1000, 10);
-//    manager.allocate(1000);
-//    manager.debugPrint();
-//    manager.deallocate(1);
-//    manager.debugPrint();
-//    manager.allocate(7000);
-//    manager.debugPrint();
-//    manager.deallocate(2);
-//    manager.debugPrint();
-//    manager.allocate(200);
-//    manager.debugPrint();
-//    manager.allocate(200);
-//    manager.debugPrint();
-//    manager.allocate(200);
-//    manager.debugPrint();
-//    manager.allocate(200);
-//    manager.debugPrint();
-//    manager.allocate(200);
-//    manager.debugPrint();
-//    manager.deallocate(4);
-//    manager.debugPrint();
-//    manager.deallocate(6);
-//    manager.debugPrint();
-//    manager.allocate(200);
-//    manager.debugPrint();
-//
-test();
-    /*
-    std::ios_base::sync_with_stdio(false);
-    unsigned int mem_cells, query_count;
-    long long query;
-    std::cin >> mem_cells >> query_count;
-    MemoryManager manager(mem_cells, query_count);
-    for (unsigned int query_idx = 0; query_idx < query_count; ++query_idx) {
-        std::cin >> query;
-        if (query > 0) {
-            std::cout << manager.allocate((unsigned int) query) << std::endl;
-        } else {
-            manager.deallocate(-query);
-        }
-    }
-    return 0;
-    */
+    test();
+//    std::ios_base::sync_with_stdio(false);
+//    unsigned int mem_cells, query_count;
+//    long long query;
+//    std::cin >> mem_cells >> query_count;
+//    MemoryManager manager(mem_cells, query_count);
+//    for (unsigned int query_idx = 0; query_idx < query_count; ++query_idx) {
+//        std::cin >> query;
+//        if (query > 0) {
+//            std::cout << manager.allocate((unsigned int) query) << std::endl;
+//        } else {
+//            manager.deallocate(-query);
+//        }
+//    }
+//    return 0;
 }
