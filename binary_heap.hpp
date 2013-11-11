@@ -236,7 +236,12 @@ void BinaryHeap<TKey, TValue>::deleteElement(TIndex idx) {
 template<typename TKey, typename TValue>
 void BinaryHeap<TKey, TValue>::debugPrint() const {
     for(auto k_it = keys_.begin(); k_it != keys_.end(); ++k_it) {
-        k_it->debugPrint();
+        std::cout << *k_it;
+        std::cout << '\t';
+    }
+    std::cout << "\n";
+    for(auto v_it = values_.begin(); v_it != values_.end(); ++v_it) {
+        std::cout << *v_it;
         std::cout << '\t';
     }
     std::cout << "\n";
