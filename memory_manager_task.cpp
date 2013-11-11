@@ -1,203 +1,7 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-
-template<typename T>
-struct TraitsSentinel;
-
-// Class representing binary heap with user specified key type and value type
-template <typename TKey, typename TValue>
-class BinaryHeap {
-    public:
-        typedef long long TIndex;
-        typedef TKey TKeyType;
-        typedef TValue TValueType;
-
-        explicit BinaryHeap(std::size_t max_size);
-        TValue extractMax();
-        const TValue& getMax() const;
-        TIndex insert(TKey key, TValue value);
-        TValue& operator[] (TIndex index);
-        const TValue& operator[] (TIndex index) const;
-        TIndex replace(TIndex prev_idx, TKey new_key, TValue value);
-        void remove(TIndex idx);
-        void debugPrint() const;
-        const std::vector<TKey>& getKeys() const;
-        const std::vector<TValue>& getValues() const;
-        unsigned int getSize() const;
-        unsigned int getMaxSize() const;
-
-    private:
-        void heapifyDown(TIndex idx);
-        TIndex heapifyUp(TIndex idx);
-        TIndex increaseKey(TKey new_key, TIndex idx);
-        void swapElements(TIndex one, TIndex other);
-        TIndex getParentIndex(TIndex idx);
-        TIndex getLeftIndex(TIndex idx);
-        TIndex getRightIndex(TIndex idx);
-        void deleteElement(TIndex idx);
-
-        unsigned int heap_size_;
-        unsigned int max_heap_size_;
-        std::vector<TKey> keys_;
-        std::vector<TValue> values_;
-};
-
-template<typename TKey, typename TValue>
-BinaryHeap<TKey, TValue>::BinaryHeap(std::size_t max_size) : 
-    heap_size_(0),
-    max_heap_size_(max_size),
-    keys_(max_heap_size_),
-    values_(max_heap_size_) {}
-
-template<typename TKey, typename TValue>
-const TValue& BinaryHeap<TKey, TValue>::getMax() const {
-    return values_[0];
-}
-
-template<typename TKey, typename TValue>
-typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::getParentIndex(TIndex idx) {
-    if (idx <= 0) return -1;
-    return (idx - 1) >> 1;
-}
-
-template<typename TKey, typename TValue>
-typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::getLeftIndex(TIndex idx) {
-    return (idx << 1) + 1;
-}
-
-template<typename TKey, typename TValue>
-typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::getRightIndex(TIndex idx) {
-    return (idx << 1) + 2;
-}
-
-template<typename TKey, typename TValue>
-void BinaryHeap<TKey, TValue>::swapElements(TIndex one, TIndex other) {
-    using std::swap;
-    swap(keys_[one], keys_[other]);
-    swap(values_[one], values_[other]);
-}
-
-template<typename TKey, typename TValue>
-unsigned int BinaryHeap<TKey, TValue>::getSize() const {
-    return heap_size_;
-}
-
-template<typename TKey, typename TValue>
-unsigned int BinaryHeap<TKey, TValue>::getMaxSize() const {
-    return max_heap_size_;
-}
-
-template<typename TKey, typename TValue>
-const std::vector<TKey>& BinaryHeap<TKey, TValue>::getKeys() const {
-    return keys_;
-}
-
-template<typename TKey, typename TValue>
-const std::vector<TValue>& BinaryHeap<TKey, TValue>::getValues() const {
-    return values_;
-}
-
-template<typename TKey, typename TValue>
-TValue& BinaryHeap<TKey, TValue>::operator[] (TIndex idx) {
-    // just as an experiment
-    return const_cast<TValue&>(static_cast<const BinaryHeap<TKey, TValue>&>(*this)[idx]);
-}
-
-template<typename TKey, typename TValue>
-const TValue& BinaryHeap<TKey, TValue>::operator[] (TIndex idx) const {
-    return values_[idx];
-}
-
-template<typename TKey, typename TValue>
-void BinaryHeap<TKey, TValue>::heapifyDown(TIndex idx) {
-    TIndex left_idx = getLeftIndex(idx);
-    TIndex right_idx = getRightIndex(idx);
-    TIndex max_idx = idx;
-
-    if (left_idx < heap_size_ && keys_[max_idx] < keys_[left_idx]) {
-        max_idx = left_idx;
-    }
-    if (right_idx < heap_size_ && keys_[max_idx] < keys_[right_idx]) {
-        max_idx = right_idx;
-    }
-    if (max_idx != idx) {
-        swapElements(idx, max_idx);
-        heapifyDown(max_idx);
-    }
-}
-
-template<typename TKey, typename TValue>
-typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::insert(TKey key, TValue value) {
-    keys_[heap_size_] = TraitsSentinel<TKey>::getMinusSentinel();
-    TIndex new_idx = increaseKey(key, heap_size_);
-
-    ++heap_size_;
-    values_[new_idx] = value;
-    return new_idx;
-}
-
-template<typename TKey, typename TValue>
-typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::replace(TIndex prev_idx, 
-                                       TKey new_key, 
-                                       TValue value) {
-    TIndex idx = increaseKey(new_key, prev_idx);
-    values_[idx] = value;
-
-    return idx;
-}
-
-template<typename TKey, typename TValue>
-TValue BinaryHeap<TKey, TValue>::extractMax() {
-    TValue max = values_[0];
-    deleteElement(0);
-    heapifyDown(0);
-    return max;
-}
-
-template<typename TKey, typename TValue>
-void BinaryHeap<TKey, TValue>::remove(TIndex idx) {
-    deleteElement(idx);
-
-    idx = heapifyUp(idx);
-    heapifyDown(idx);
-}
-
-template<typename TKey, typename TValue>
-typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::increaseKey(TKey new_key, 
-                                                                                TIndex idx) {
-    keys_[idx] = new_key;
-    idx = heapifyUp(idx);
-    return idx;
-}
-
-template<typename TKey, typename TValue>
-void BinaryHeap<TKey, TValue>::deleteElement(TIndex idx) {
-    swapElements(idx, heap_size_ - 1);
-    keys_[heap_size_ - 1] = TKey();
-    --heap_size_;
-}
-
-template<typename TKey, typename TValue>
-void BinaryHeap<TKey, TValue>::debugPrint() const {
-    for (auto k_it = keys_.begin(); k_it != keys_.end(); ++k_it) {
-        k_it->debugPrint();
-        std::cout << '\t';
-    }
-    std::cout << "\n";
-}
-
-template<typename TKey, typename TValue>
-typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::heapifyUp(TIndex idx) {
-    TIndex parent_idx = getParentIndex(idx);
-
-    while (idx > 0 && keys_[parent_idx] < keys_[idx]) {
-        swapElements(idx, parent_idx);
-        idx = parent_idx;
-        parent_idx = getParentIndex(idx);
-    }
-    return idx;
-}
+#include <assert.h>
 
 struct MemoryBlock {
     struct KeyT {
@@ -244,34 +48,8 @@ MemoryBlock::KeyT MemoryBlock::getKey() const {
     return KeyT(size, position);
 }
 
-void MemoryBlock::swap(MemoryBlock &other) {
-    MemoryBlock tmp = *this;
-    *this = other;
-    other = tmp;
-    using std::swap;
-    swap(free_heap_index, other.free_heap_index);
-
-    if (p_prev) {
-        p_prev->p_next = this;
-    }
-    if (p_next) {
-        p_next->p_prev = this;
-    }
-
-    if (other.p_prev) {
-        other.p_prev->p_next = &other;
-    }
-    if (other.p_next) {
-        other.p_next->p_prev = &other;
-    }
-}
-
-void swap(MemoryBlock &one, MemoryBlock &other) {
-    one.swap(other);
-}
-
 void MemoryBlock::debugPrint() const {
-    std::cout << "[" << position << ":" << size << ':' 
+    std::cout << "[p" << position << ":s" << size << ':' 
         << free_heap_index  << "]";
 }
 
@@ -288,16 +66,165 @@ void MemoryBlock::KeyT::debugPrint() const {
     std::cout << block_size << ':' << block_position;
 }
 
-template<>
-struct TraitsSentinel<MemoryBlock::KeyT> {
-    static MemoryBlock::KeyT getMinusSentinel() { 
-        return MemoryBlock::KeyT(0, 0); 
-    }
+// Class representing binary heap with user specified key type and value type
+class MemoryBinaryHeap {
+    public:
+        explicit MemoryBinaryHeap(std::size_t max_size);
+        long long extractMax();
+        const MemoryBlock *getMax() const;
+        long long insert(MemoryBlock::KeyT key);
+        MemoryBlock *&operator[] (long long index);
+        MemoryBlock *const &operator[] (long long index) const;
+        long long replace(long long prev_idx, MemoryBlock::KeyT new_key);
+        long long remove(long long idx);
+        void debugPrint() const;
+        unsigned int getSize() const;
+
+    private:
+        void heapifyDown(long long idx);
+        long long heapifyUp(long long idx);
+        long long increaseKey(MemoryBlock::KeyT new_key, long long idx);
+        void swapElements(long long one, long long other);
+        long long getParentIndex(long long idx) const;
+        long long getLeftIndex(long long idx) const;
+        long long getRightIndex(long long idx) const;
+        void deleteElement(long long idx);
+
+        unsigned int heap_size_;
+        unsigned int max_heap_size_;
+        std::vector<MemoryBlock::KeyT> keys_;
+        std::vector<MemoryBlock*> values_;
 };
+
+MemoryBinaryHeap::MemoryBinaryHeap(std::size_t max_size) : 
+    heap_size_(0),
+    max_heap_size_(max_size),
+    keys_(max_heap_size_),
+    values_(max_heap_size_) {}
+
+const MemoryBlock *MemoryBinaryHeap::getMax() const {
+    return values_[0];
+}
+
+long long MemoryBinaryHeap::getParentIndex(long long idx) const {
+    if (idx <= 0) return -1;
+    return (idx - 1) >> 1;
+}
+
+long long MemoryBinaryHeap::getLeftIndex(long long idx) const {
+    return (idx << 1) + 1;
+}
+
+long long MemoryBinaryHeap::getRightIndex(long long idx) const {
+    return (idx << 1) + 2;
+}
+
+void MemoryBinaryHeap::swapElements(long long one, long long other) {
+    using std::swap;
+    swap(keys_[one], keys_[other]);
+    swap(values_[one], values_[other]);
+    if (values_[one]) {
+        values_[one]->free_heap_index = one;
+    }
+    if (values_[other]) {
+        values_[other]->free_heap_index = other;
+    }
+}
+
+unsigned int MemoryBinaryHeap::getSize() const {
+    return heap_size_;
+}
+
+MemoryBlock *&MemoryBinaryHeap::operator[] (long long idx) {
+    // just as an experiment
+    return const_cast<MemoryBlock *&>(static_cast<const MemoryBinaryHeap&>(*this)[idx]);
+}
+
+MemoryBlock * const &MemoryBinaryHeap::operator[] (long long idx) const {
+    return values_[idx];
+}
+
+void MemoryBinaryHeap::heapifyDown(long long idx) {
+    long long left_idx = getLeftIndex(idx);
+    long long right_idx = getRightIndex(idx);
+    long long max_idx = idx;
+
+    if (left_idx < heap_size_ && keys_[max_idx] < keys_[left_idx]) {
+        max_idx = left_idx;
+    }
+    if (right_idx < heap_size_ && keys_[max_idx] < keys_[right_idx]) {
+        max_idx = right_idx;
+    }
+    if (max_idx != idx) {
+        swapElements(idx, max_idx);
+        heapifyDown(max_idx);
+    }
+}
+
+long long MemoryBinaryHeap::insert(MemoryBlock::KeyT key) {
+    keys_[heap_size_] = MemoryBlock::KeyT(0, 0);
+    long long new_idx = increaseKey(key, heap_size_);
+
+    ++heap_size_;
+    return new_idx;
+}
+
+long long MemoryBinaryHeap::replace(long long prev_idx, 
+                                       MemoryBlock::KeyT new_key) {
+    long long idx = increaseKey(new_key, prev_idx);
+
+    return idx;
+}
+
+long long MemoryBinaryHeap::extractMax() {
+    deleteElement(0);
+    heapifyDown(0);
+    return heap_size_;
+}
+
+long long MemoryBinaryHeap::remove(long long idx) {
+    deleteElement(idx);
+
+    idx = heapifyUp(idx);
+    heapifyDown(idx);
+    return heap_size_;
+}
+
+long long MemoryBinaryHeap::increaseKey(MemoryBlock::KeyT new_key, long long idx) {
+    keys_[idx] = new_key;
+    idx = heapifyUp(idx);
+    return idx;
+}
+
+void MemoryBinaryHeap::deleteElement(long long idx) {
+    swapElements(idx, heap_size_ - 1);
+    keys_[heap_size_ - 1] = MemoryBlock::KeyT();
+    --heap_size_;
+}
+
+void MemoryBinaryHeap::debugPrint() const {
+    for (auto k_it = keys_.begin(); k_it != keys_.end(); ++k_it) {
+        k_it->debugPrint();
+        std::cout << '\t';
+    }
+    std::cout << "\n";
+}
+
+long long MemoryBinaryHeap::heapifyUp(long long idx) {
+    long long parent_idx = getParentIndex(idx);
+
+    while (idx > 0 && keys_[parent_idx] < keys_[idx]) {
+        swapElements(idx, parent_idx);
+        idx = parent_idx;
+        parent_idx = getParentIndex(idx);
+    }
+    return idx;
+}
 
 class MemoryManager {
     public:
         MemoryManager(unsigned memory_cells_number, unsigned int max_query_number);
+        ~MemoryManager();
 
         long long allocate(unsigned int block_size);
         void deallocate(unsigned int query_number);
@@ -306,15 +233,13 @@ class MemoryManager {
         unsigned int memory_cells_number_;
         unsigned int query_number_;
         unsigned int query_counter_;
-        std::vector<MemoryBlock> occupied_blocks_;
-        typedef BinaryHeap<MemoryBlock::KeyT, MemoryBlock> TFreeBlocksHeap; 
-        TFreeBlocksHeap free_blocks_;
-        MemoryBlock head_;
+        std::vector<MemoryBlock*> occupied_blocks_;
+         
+        MemoryBinaryHeap free_blocks_;
+        MemoryBlock *head_;
 
-        MemoryBlock &getFreeBlockLinks(TFreeBlocksHeap::TIndex free_idx);
         void connectBlocks(MemoryBlock *one, MemoryBlock *other);
         bool isOccupied(const MemoryBlock *block) const;
-        bool notValid(const MemoryBlock &block) const;
 };
 
 MemoryManager::MemoryManager(unsigned int memory_cells_number, unsigned int query_number) :
@@ -323,60 +248,75 @@ MemoryManager::MemoryManager(unsigned int memory_cells_number, unsigned int quer
     query_counter_(0),
     occupied_blocks_(query_number),
     free_blocks_(query_number),
-    head_(0, 0) {
-    for (unsigned int idx = 0; idx < query_number; ++idx) {
-        free_blocks_[idx].free_heap_index = idx;
-    }
-    MemoryBlock free_block(memory_cells_number, 0);
-    auto idx = free_blocks_.insert(free_block.getKey(), free_block);
-    MemoryBlock &new_free_block = getFreeBlockLinks(idx);
-    connectBlocks(&head_, &new_free_block);
+    head_(new MemoryBlock(0, 0)) {
+    MemoryBlock *free_block = new MemoryBlock(memory_cells_number, 0);
+    auto idx = free_blocks_.insert(free_block->getKey());
+    free_blocks_[idx] = free_block;
+    free_block->free_heap_index = idx;
+    head_->p_next = free_block;
+    free_block->p_prev = head_;
 }
 
-long long MemoryManager::allocate(unsigned int block_size) {
-    if (free_blocks_.getSize() < 1) {
-        return -1;
+MemoryManager::~MemoryManager() {
+    for (unsigned int idx = 0; idx < query_number_; ++idx) {
+        if (occupied_blocks_[idx] != nullptr) {
+            delete occupied_blocks_[idx];
+            occupied_blocks_[idx] = nullptr;
+        }
+        if (free_blocks_[idx] != nullptr) {
+            delete free_blocks_[idx];
+            free_blocks_[idx] = nullptr;
+        }
     }
-    unsigned int biggest_block_size = free_blocks_.getMax().size;
-    long long position = free_blocks_.getMax().position + 1;
-    if (biggest_block_size < block_size) {
-        // no place for such a big block
-        occupied_blocks_[query_counter_].size = 0;
+    delete head_;
+}
+
+
+long long MemoryManager::allocate(unsigned int block_size) {
+    long long position = -1;
+    const MemoryBlock *biggest_block = free_blocks_.getMax();
+    if (!biggest_block || biggest_block->size < block_size) {
+        occupied_blocks_[query_counter_] = nullptr;
         position = -1;
-    } else if (biggest_block_size == block_size) {
+    } else if (biggest_block->size == block_size) {
+        position = biggest_block->position + 1;
         // ... |         free        | ...
         //                ||     
         //                \/    
         // ... |         occ         | ...     occ for occupied here
 
         // whole free block turns to occupied block
-        MemoryBlock biggest_block = free_blocks_.extractMax();
-
-        occupied_blocks_[query_counter_] = MemoryBlock(block_size, biggest_block.position);
-        MemoryBlock &new_occ_block = occupied_blocks_[query_counter_];
-
-        connectBlocks(biggest_block.p_prev, &new_occ_block);
-        connectBlocks(&new_occ_block, biggest_block.p_next);
-    } else if (biggest_block_size > block_size) {
+        long long idx = free_blocks_.extractMax();
+        MemoryBlock *biggest_block = free_blocks_[idx];
+        biggest_block->free_heap_index = -1;
+        occupied_blocks_[query_counter_] = biggest_block;
+        free_blocks_[idx] = nullptr;
+    } else if (biggest_block->size > block_size) {
+        position = biggest_block->position + 1;
         // ... |         free        | ...
         //                 ||     
         //                 \/    
         // ... | occ  |      free    | ...
         // splitting free block into occupied block and free block
-        MemoryBlock biggest_block = free_blocks_.extractMax();
+        auto idx = free_blocks_.extractMax();
+        MemoryBlock *biggest_block = free_blocks_[idx];
+        free_blocks_[idx] = nullptr;
 
         // create occupied block
-        occupied_blocks_[query_counter_] = MemoryBlock(block_size, biggest_block.position);
-        MemoryBlock &new_occ_block = occupied_blocks_[query_counter_];
+        occupied_blocks_[query_counter_] = new MemoryBlock(block_size, biggest_block->position);
+        MemoryBlock *new_occ_block = occupied_blocks_[query_counter_];
         // create free block
-        MemoryBlock tmp_free_block = MemoryBlock(biggest_block.size - block_size, 
-                                                 biggest_block.position + block_size);
-        auto free_idx = free_blocks_.insert(tmp_free_block.getKey(), tmp_free_block);
-        MemoryBlock &new_free_block = getFreeBlockLinks(free_idx);
+        MemoryBlock *new_free_block = new MemoryBlock(biggest_block->size - block_size, 
+                                                 biggest_block->position + block_size);
+        auto free_idx = free_blocks_.insert(new_free_block->getKey());
+        free_blocks_[free_idx] = new_free_block;
+        new_free_block->free_heap_index = free_idx;
 
-        connectBlocks(biggest_block.p_prev, &new_occ_block);
-        connectBlocks(&new_occ_block, &new_free_block);
-        connectBlocks(&new_free_block, biggest_block.p_next);
+        connectBlocks(biggest_block->p_prev, new_occ_block);
+        connectBlocks(new_occ_block, new_free_block);
+        connectBlocks(new_free_block, biggest_block->p_next);
+
+        delete biggest_block;
     }
     ++query_counter_;
     return position;
@@ -384,55 +324,66 @@ long long MemoryManager::allocate(unsigned int block_size) {
 
 void MemoryManager::deallocate(unsigned int query_number) {
     --query_number;
-    if (query_number >= query_counter_ || query_number < 0)
-        return;
-    MemoryBlock occ = occupied_blocks_[query_number]; // occ -- occupied block to free
-    if (notValid(occ)) {
+    MemoryBlock *occ = occupied_blocks_[query_number]; // occ -- occupied block to free
+    if (!occ) {
+        ++query_counter_;
         return;
     }
-
-    if (isOccupied(occ.p_prev) && isOccupied(occ.p_next)) {
+    if (isOccupied(occ->p_prev) && isOccupied(occ->p_next)) {
         // ... | occ  |  occ | occ | ...
         //               ||     
         //               \/    
         // ... | occ  | free | occ | ...
 
         // creating free block
-        MemoryBlock tmp(occ.size, occ.position);
-        auto free_idx = free_blocks_.insert(tmp.getKey(), tmp);
-        MemoryBlock &new_free_block = getFreeBlockLinks(free_idx);
-        connectBlocks(occ.p_prev, &new_free_block);
-        connectBlocks(&new_free_block, occ.p_next);
-    } else if (!isOccupied(occ.p_prev) && isOccupied(occ.p_next)) {
+        auto free_idx = free_blocks_.insert(occ->getKey());
+        free_blocks_[free_idx] = occ;
+        occ->free_heap_index = free_idx;
+        occupied_blocks_[query_number] = nullptr;
+    } else if (!isOccupied(occ->p_prev) && isOccupied(occ->p_next)) {
         // ... | free |  occ | occ | ...
         //               ||     
         //               \/    
         // ... |   free      | occ | ...
         
         // updating free block
-        MemoryBlock free_left = *occ.p_prev;
+        MemoryBlock *free_left = occ->p_prev;
 
-        MemoryBlock tmp(free_left.size + occ.size, free_left.position);
-        auto free_idx = free_blocks_.replace(free_left.free_heap_index, tmp.getKey(), tmp);
-        MemoryBlock &new_free_block = getFreeBlockLinks(free_idx);
+        MemoryBlock *new_free_block = new MemoryBlock(free_left->size + occ->size, 
+                                                      free_left->position);
+        connectBlocks(free_left->p_prev, new_free_block);
+        connectBlocks(new_free_block, occ->p_next);
 
-        connectBlocks(free_left.p_next, &new_free_block);
-        connectBlocks(&new_free_block, occ.p_next);
-    } else if (isOccupied(occ.p_prev) && !isOccupied(occ.p_next)) {
+        long long free_idx = free_blocks_.replace
+            (free_left->free_heap_index, new_free_block->getKey());
+        delete free_blocks_[free_idx];
+        free_blocks_[free_idx] = new_free_block;
+        new_free_block->free_heap_index = free_idx;
+
+        delete occ;
+        occupied_blocks_[query_number] = nullptr;
+    } else if (isOccupied(occ->p_prev) && !isOccupied(occ->p_next)) {
         // ... | occ  |  occ | free | ...
         //               ||     
         //               \/    
         // ... | occ  |    free     | ...
         
         // updating free block
-        MemoryBlock free_right = *occ.p_next;
+        MemoryBlock *free_right = occ->p_next;
 
-        MemoryBlock tmp(free_right.size + occ.size, occ.position);
-        auto free_idx = free_blocks_.replace(free_right.free_heap_index, tmp.getKey(), tmp);
-        MemoryBlock &new_free_block = getFreeBlockLinks(free_idx);
+        MemoryBlock *new_free_block = new MemoryBlock(free_right->size + occ->size, occ->position);
+        connectBlocks(occ->p_prev, new_free_block);
+        connectBlocks(new_free_block, occ->p_next->p_next);
 
-        connectBlocks(occ.p_prev, &new_free_block);
-        connectBlocks(&new_free_block, free_right.p_next);
+        auto free_idx = free_blocks_.replace(free_right->free_heap_index, 
+                                             new_free_block->getKey());
+        delete free_blocks_[free_idx];
+        free_blocks_[free_idx] = new_free_block;
+        new_free_block->free_heap_index = free_idx;
+
+
+        delete occ;
+        occupied_blocks_[query_number] = nullptr;
     } else {
         // ... | free  |  occ | free | ...
         //                 ||     
@@ -440,23 +391,32 @@ void MemoryManager::deallocate(unsigned int query_number) {
         // ... |         free        | ...
 
         // updating previous free block
-        MemoryBlock free_left = *occ.p_prev;
-        MemoryBlock free_right = *occ.p_next;
-        free_blocks_.remove(free_right.free_heap_index);
+        MemoryBlock *free_left = occ->p_prev;
+        MemoryBlock *free_right = occ->p_next;
 
-        MemoryBlock tmp(free_left.size + occ.size + free_right.size, free_left.position);
-        auto new_idx = free_blocks_.replace(free_left.free_heap_index, tmp.getKey(), tmp);
-        MemoryBlock &new_free_block = getFreeBlockLinks(new_idx);
+        MemoryBlock *new_free_block = new MemoryBlock(free_left->size 
+                                                       + occ->size 
+                                                       + free_right->size,
+                                                      free_left->position);
+        connectBlocks(free_left->p_prev, new_free_block); //
+        connectBlocks(new_free_block, free_right->p_next);
 
-        connectBlocks(free_left.p_prev, &new_free_block);
-        connectBlocks(&new_free_block, free_right.p_next);
+        auto new_idx = free_blocks_.replace(free_left->free_heap_index, new_free_block->getKey());
+        MemoryBlock *old_free_left = free_blocks_[new_idx];
+        assert(old_free_left == free_left);
+        free_blocks_[new_idx] = new_free_block;
+        new_free_block->free_heap_index = new_idx;
+
+        auto delete_idx = free_blocks_.remove(occ->p_next->free_heap_index);
+        delete free_blocks_[delete_idx];
+        free_blocks_[delete_idx] = nullptr;
+
+        delete occ;
+        occupied_blocks_[query_number] = nullptr;
+
+        delete old_free_left;
     }
-}
-
-MemoryBlock &MemoryManager::getFreeBlockLinks(TFreeBlocksHeap::TIndex free_idx) {
-    MemoryBlock &new_free_block = free_blocks_[free_idx];
-    new_free_block.free_heap_index = free_idx;
-    return new_free_block;
+    ++query_counter_;
 }
 
 void MemoryManager::connectBlocks(MemoryBlock *one, MemoryBlock *other) {
@@ -476,12 +436,8 @@ bool MemoryManager::isOccupied(const MemoryBlock *ptr) const {
     }
 }
 
-bool MemoryManager::notValid(const MemoryBlock &block) const {
-    return block.size == 0;
-}
-
 void MemoryManager::debugPrint() const {
-    MemoryBlock *ptr = head_.p_next;
+    MemoryBlock *ptr = head_->p_next;
     while (ptr) {
         ptr->debugPrint();
         std::cout << ' ';
@@ -490,64 +446,19 @@ void MemoryManager::debugPrint() const {
     std::cout << std::endl;
 }
 
- void test() {
-     MemoryManager manager(1000, 30);
-     manager.allocate(100);
-     manager.debugPrint();
-     manager.allocate(100);
-     manager.debugPrint();
-     manager.allocate(100);
-     manager.debugPrint();
-     manager.allocate(100);
-     manager.debugPrint();
-     manager.allocate(100);
-     manager.debugPrint();
-     manager.allocate(100);
-     manager.debugPrint();
-     manager.allocate(100);
-     manager.debugPrint();
-     manager.allocate(100);
-     manager.debugPrint();
-     manager.allocate(100);
-     manager.debugPrint();
-     manager.allocate(100);
-     manager.debugPrint();
-     manager.deallocate(2);
-     manager.debugPrint();
-     manager.deallocate(4);
-     manager.debugPrint();
-     manager.deallocate(6);
-     manager.debugPrint();
-     manager.deallocate(8);
-     manager.debugPrint();
-     manager.deallocate(10);
-     manager.debugPrint();
-     manager.deallocate(5);
-     manager.debugPrint();
-     manager.deallocate(3);
-     manager.debugPrint();
-     manager.deallocate(7);
-     manager.debugPrint();
-     manager.deallocate(1);
-     manager.debugPrint();
-     manager.deallocate(9);
-     manager.debugPrint();
- }
-
 int main() {
-    test();
-//    std::ios_base::sync_with_stdio(false);
-//    unsigned int mem_cells, query_count;
-//    long long query;
-//    std::cin >> mem_cells >> query_count;
-//    MemoryManager manager(mem_cells, query_count);
-//    for (unsigned int query_idx = 0; query_idx < query_count; ++query_idx) {
-//        std::cin >> query;
-//        if (query > 0) {
-//            std::cout << manager.allocate((unsigned int) query) << std::endl;
-//        } else {
-//            manager.deallocate(-query);
-//        }
-//    }
-//    return 0;
+    std::ios_base::sync_with_stdio(false);
+    unsigned int mem_cells, query_count;
+    long long query;
+    std::cin >> mem_cells >> query_count;
+    MemoryManager manager(mem_cells, query_count);
+    for (unsigned int query_idx = 0; query_idx < query_count; ++query_idx) {
+        std::cin >> query;
+        if (query > 0) {
+            std::cout << manager.allocate((unsigned int) query) << std::endl;
+        } else {
+            manager.deallocate(-query);
+        }
+    }
+    return 0;
 }
