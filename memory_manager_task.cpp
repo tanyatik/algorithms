@@ -142,6 +142,7 @@ typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::replace(TInd
                                        TKey new_key, 
                                        TValue value) {
     TIndex idx = increaseKey(new_key, prev_idx);
+    values_[idx] = value;
 
     return idx;
 }
@@ -173,7 +174,7 @@ typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::increaseKey(
 template<typename TKey, typename TValue>
 void BinaryHeap<TKey, TValue>::deleteElement(TIndex idx) {
     swapElements(idx, heap_size_ - 1);
-    values_[heap_size_ - 1] = TValue();
+    //values_[heap_size_ - 1] = TValue();
     keys_[heap_size_ - 1] = TKey();
     --heap_size_;
 }
@@ -248,6 +249,8 @@ void MemoryBlock::swap(MemoryBlock &other) {
     MemoryBlock tmp = *this;
     *this = other;
     other = tmp;
+    using std::swap;
+    swap(free_heap_index, other.free_heap_index);
 
     if (p_prev) {
         p_prev->p_next = this;
@@ -270,7 +273,7 @@ void swap(MemoryBlock &one, MemoryBlock &other) {
 
 void MemoryBlock::debugPrint() const {
     std::cout << "[" << position << ":" << size << ':' 
-        << (free_heap_index == -1 ? 'O' : 'F') << "]";
+        << free_heap_index  << "]";
 }
 
 MemoryBlock::KeyT::KeyT(unsigned int block_size, unsigned int block_position) :
@@ -309,9 +312,10 @@ class MemoryManager {
         TFreeBlocksHeap free_blocks_;
         MemoryBlock head_;
 
-        MemoryBlock& getFreeBlockLinks(TFreeBlocksHeap::TIndex free_idx);
+        MemoryBlock &getFreeBlockLinks(TFreeBlocksHeap::TIndex free_idx);
         void connectBlocks(MemoryBlock *one, MemoryBlock *other);
         bool isOccupied(const MemoryBlock *block) const;
+        bool notValid(const MemoryBlock &block) const;
 };
 
 MemoryManager::MemoryManager(unsigned int memory_cells_number, unsigned int query_number) :
@@ -321,9 +325,12 @@ MemoryManager::MemoryManager(unsigned int memory_cells_number, unsigned int quer
     occupied_blocks_(query_number),
     free_blocks_(query_number),
     head_(0, 0) {
+    for (unsigned int idx = 0; idx < query_number; ++idx) {
+        free_blocks_[idx].free_heap_index = idx;
+    }
     MemoryBlock free_block(memory_cells_number, 0);
     auto idx = free_blocks_.insert(free_block.getKey(), free_block);
-    MemoryBlock& new_free_block = getFreeBlockLinks(idx);
+    MemoryBlock &new_free_block = getFreeBlockLinks(idx);
     connectBlocks(&head_, &new_free_block);
 }
 
@@ -332,10 +339,11 @@ long long MemoryManager::allocate(unsigned int block_size) {
         return -1;
     }
     unsigned int biggest_block_size = free_blocks_.getMax().size;
-    unsigned int position = free_blocks_.getMax().position;
+    long long position = free_blocks_.getMax().position + 1;
     if (biggest_block_size < block_size) {
         // no place for such a big block
-        return -1;
+        occupied_blocks_[query_counter_].size = 0;
+        position = -1;
     } else if (biggest_block_size == block_size) {
         // ... |         free        | ...
         //                ||     
@@ -346,7 +354,7 @@ long long MemoryManager::allocate(unsigned int block_size) {
         MemoryBlock biggest_block = free_blocks_.extractMax();
 
         occupied_blocks_[query_counter_] = MemoryBlock(block_size, biggest_block.position);
-        MemoryBlock& new_occ_block = occupied_blocks_[query_counter_];
+        MemoryBlock &new_occ_block = occupied_blocks_[query_counter_];
 
         connectBlocks(biggest_block.p_prev, &new_occ_block);
         connectBlocks(&new_occ_block, biggest_block.p_next);
@@ -360,26 +368,29 @@ long long MemoryManager::allocate(unsigned int block_size) {
 
         // create occupied block
         occupied_blocks_[query_counter_] = MemoryBlock(block_size, biggest_block.position);
-        MemoryBlock& new_occ_block = occupied_blocks_[query_counter_];
+        MemoryBlock &new_occ_block = occupied_blocks_[query_counter_];
         // create free block
         MemoryBlock tmp_free_block = MemoryBlock(biggest_block.size - block_size, 
                                                  biggest_block.position + block_size);
         auto free_idx = free_blocks_.insert(tmp_free_block.getKey(), tmp_free_block);
-        MemoryBlock& new_free_block = getFreeBlockLinks(free_idx);
+        MemoryBlock &new_free_block = getFreeBlockLinks(free_idx);
 
         connectBlocks(biggest_block.p_prev, &new_occ_block);
         connectBlocks(&new_occ_block, &new_free_block);
         connectBlocks(&new_free_block, biggest_block.p_next);
     }
     ++query_counter_;
-    return position + 1;
+    return position;
 }
 
 void MemoryManager::deallocate(unsigned int query_number) {
     --query_number;
     if (query_number >= query_counter_ || query_number < 0)
         return;
-    MemoryBlock& occ = occupied_blocks_[query_number]; // occ -- occupied block to free
+    MemoryBlock occ = occupied_blocks_[query_number]; // occ -- occupied block to free
+    if (notValid(occ)) {
+        return;
+    }
 
     if (isOccupied(occ.p_prev) && isOccupied(occ.p_next)) {
         // ... | occ  |  occ | occ | ...
@@ -390,7 +401,7 @@ void MemoryManager::deallocate(unsigned int query_number) {
         // creating free block
         MemoryBlock tmp(occ.size, occ.position);
         auto free_idx = free_blocks_.insert(tmp.getKey(), tmp);
-        MemoryBlock& new_free_block = getFreeBlockLinks(free_idx);
+        MemoryBlock &new_free_block = getFreeBlockLinks(free_idx);
         connectBlocks(occ.p_prev, &new_free_block);
         connectBlocks(&new_free_block, occ.p_next);
     } else if (!isOccupied(occ.p_prev) && isOccupied(occ.p_next)) {
@@ -400,11 +411,11 @@ void MemoryManager::deallocate(unsigned int query_number) {
         // ... |   free      | occ | ...
         
         // updating free block
-        MemoryBlock& free_left = *occ.p_prev;
+        MemoryBlock free_left = *occ.p_prev;
 
         MemoryBlock tmp(free_left.size + occ.size, free_left.position);
         auto free_idx = free_blocks_.replace(free_left.free_heap_index, tmp.getKey(), tmp);
-        MemoryBlock& new_free_block = getFreeBlockLinks(free_idx);
+        MemoryBlock &new_free_block = getFreeBlockLinks(free_idx);
 
         connectBlocks(free_left.p_next, &new_free_block);
         connectBlocks(&new_free_block, occ.p_next);
@@ -415,11 +426,11 @@ void MemoryManager::deallocate(unsigned int query_number) {
         // ... | occ  |    free     | ...
         
         // updating free block
-        MemoryBlock& free_right = *occ.p_next;
+        MemoryBlock free_right = *occ.p_next;
 
         MemoryBlock tmp(free_right.size + occ.size, occ.position);
         auto free_idx = free_blocks_.replace(free_right.free_heap_index, tmp.getKey(), tmp);
-        MemoryBlock& new_free_block = getFreeBlockLinks(free_idx);
+        MemoryBlock &new_free_block = getFreeBlockLinks(free_idx);
 
         connectBlocks(occ.p_prev, &new_free_block);
         connectBlocks(&new_free_block, free_right.p_next);
@@ -430,21 +441,23 @@ void MemoryManager::deallocate(unsigned int query_number) {
         // ... |         free        | ...
 
         // updating previous free block
-        MemoryBlock& free_left = *occ.p_prev;
-        MemoryBlock& free_right = *occ.p_next;
+        MemoryBlock free_left = *occ.p_prev;
+        MemoryBlock &free_right = *occ.p_next;
 
         MemoryBlock tmp(free_left.size + occ.size + free_right.size, free_left.position);
         auto new_idx = free_blocks_.replace(free_left.free_heap_index, tmp.getKey(), tmp);
-        MemoryBlock& new_free_block = getFreeBlockLinks(new_idx);
+        MemoryBlock &new_free_block = getFreeBlockLinks(new_idx);
 
         connectBlocks(free_left.p_prev, &new_free_block);
         connectBlocks(&new_free_block, free_right.p_next);
+        free_right.p_next = nullptr;
+        free_right.p_prev = nullptr;
         free_blocks_.remove(free_right.free_heap_index);
     }
 }
 
-MemoryBlock& MemoryManager::getFreeBlockLinks(TFreeBlocksHeap::TIndex free_idx) {
-    MemoryBlock& new_free_block = free_blocks_[free_idx];
+MemoryBlock &MemoryManager::getFreeBlockLinks(TFreeBlocksHeap::TIndex free_idx) {
+    MemoryBlock &new_free_block = free_blocks_[free_idx];
     new_free_block.free_heap_index = free_idx;
     return new_free_block;
 }
@@ -466,6 +479,10 @@ bool MemoryManager::isOccupied(const MemoryBlock *ptr) const {
     }
 }
 
+bool MemoryManager::notValid(const MemoryBlock &block) const {
+    return block.size == 0;
+}
+
 void MemoryManager::debugPrint() const {
     MemoryBlock *ptr = head_.p_next;
     while (ptr) {
@@ -476,31 +493,79 @@ void MemoryManager::debugPrint() const {
     std::cout << std::endl;
 }
 
-int main() {
-    MemoryManager manager(1000, 10);
-    manager.allocate(1000);
+void test() {
+    MemoryManager manager(1000, 30);
+    manager.allocate(100);
     manager.debugPrint();
-    manager.deallocate(1);
+    manager.allocate(100);
     manager.debugPrint();
-    manager.allocate(7000);
+    manager.allocate(100);
     manager.debugPrint();
-    manager.allocate(200);
+    manager.allocate(100);
     manager.debugPrint();
-    manager.allocate(200);
+    manager.allocate(100);
     manager.debugPrint();
-    manager.allocate(200);
+    manager.allocate(100);
     manager.debugPrint();
-    manager.allocate(200);
+    manager.allocate(100);
     manager.debugPrint();
-    manager.allocate(200);
+    manager.allocate(100);
+    manager.debugPrint();
+    manager.allocate(100);
+    manager.debugPrint();
+    manager.allocate(100);
+    manager.debugPrint();
+    manager.deallocate(2);
     manager.debugPrint();
     manager.deallocate(4);
     manager.debugPrint();
     manager.deallocate(6);
     manager.debugPrint();
-    manager.allocate(200);
+    manager.deallocate(8);
     manager.debugPrint();
+    manager.deallocate(10);
+    manager.debugPrint();
+    manager.deallocate(1);
+    manager.debugPrint();
+    manager.deallocate(3);
+    manager.debugPrint();
+    manager.deallocate(5);
+    manager.debugPrint();
+    manager.deallocate(7);
+    manager.debugPrint();
+    manager.deallocate(9);
+    manager.debugPrint();
+}
 
+
+int main() {
+//    MemoryManager manager(1000, 10);
+//    manager.allocate(1000);
+//    manager.debugPrint();
+//    manager.deallocate(1);
+//    manager.debugPrint();
+//    manager.allocate(7000);
+//    manager.debugPrint();
+//    manager.deallocate(2);
+//    manager.debugPrint();
+//    manager.allocate(200);
+//    manager.debugPrint();
+//    manager.allocate(200);
+//    manager.debugPrint();
+//    manager.allocate(200);
+//    manager.debugPrint();
+//    manager.allocate(200);
+//    manager.debugPrint();
+//    manager.allocate(200);
+//    manager.debugPrint();
+//    manager.deallocate(4);
+//    manager.debugPrint();
+//    manager.deallocate(6);
+//    manager.debugPrint();
+//    manager.allocate(200);
+//    manager.debugPrint();
+//
+test();
     /*
     std::ios_base::sync_with_stdio(false);
     unsigned int mem_cells, query_count;

@@ -185,6 +185,7 @@ typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::replace(TInd
 
     TIndex idx = increaseKey(new_key, prev_idx);
     assert(idx >= 0 && idx < max_heap_size_);
+    values_[idx] = value;
 
     return idx;
 }
