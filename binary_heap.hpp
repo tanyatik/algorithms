@@ -16,8 +16,8 @@ class BinaryHeap {
         typedef TValue TValueType;
 
         BinaryHeap(std::size_t max_size);
-        TValue extractMax();
-        const TValue& getMax() const;
+        TValue extractTop();
+        const TValue& getTop() const;
         //void insert(TKey key, TValue value);
         //TValue& insert(TKey key, TValue value);
         TIndex insert(TKey key, TValue value);
@@ -29,7 +29,7 @@ class BinaryHeap {
         const std::vector<TKey>& getKeys() const;
         const std::vector<TValue>& getValues() const;
         unsigned int getSize() const;
-        unsigned int getMaxSize() const;
+        unsigned int getTopSize() const;
     private:
         void heapifyDown(TIndex idx);
         TIndex heapifyUp(TIndex idx);
@@ -54,7 +54,7 @@ BinaryHeap<TKey, TValue>::BinaryHeap(std::size_t max_size) :
     values_(max_heap_size_) {}
 
 template<typename TKey, typename TValue>
-const TValue& BinaryHeap<TKey, TValue>::getMax() const{
+const TValue& BinaryHeap<TKey, TValue>::getTop() const{
     assert(heap_size_ >= 1);
     
     return values_[0];
@@ -95,7 +95,7 @@ unsigned int BinaryHeap<TKey, TValue>::getSize() const {
 }
 
 template<typename TKey, typename TValue>
-unsigned int BinaryHeap<TKey, TValue>::getMaxSize() const {
+unsigned int BinaryHeap<TKey, TValue>::getTopSize() const {
     assert(max_heap_size_ >= 0 && heap_size_ >= 0 && heap_size_ <= max_heap_size_);
     return max_heap_size_;
 }
@@ -194,7 +194,7 @@ typename BinaryHeap<TKey, TValue>::TIndex BinaryHeap<TKey, TValue>::replace(TInd
 
 
 template<typename TKey, typename TValue>
-TValue BinaryHeap<TKey, TValue>::extractMax() {
+TValue BinaryHeap<TKey, TValue>::extractTop() {
     assert(heap_size_ >= 1);
     
     TValue max = values_[0];
