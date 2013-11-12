@@ -1,7 +1,6 @@
 #include <iostream>
 #include <algorithm>
 #include <vector>
-#include <assert.h>
 
 template <typename TElem>
 class BinaryHeap {
@@ -50,61 +49,48 @@ BinaryHeap<TElem>::BinaryHeap(std::size_t max_size,
 
 template<typename TElem>
 const TElem& BinaryHeap<TElem>::getTop() const{
-    assert(heap_size_ >= 1);
-   
     return elems_[0];
 }
 
 template<typename TElem>
 typename BinaryHeap<TElem>::TIndex BinaryHeap<TElem>::getParentIndex(TIndex idx) {
-    assert(idx < max_heap_size_);
     if(idx <= 0) return -1;
     return (idx - 1) >> 1;
 }
 
 template<typename TElem>
 typename BinaryHeap<TElem>::TIndex BinaryHeap<TElem>::getLeftIndex(TIndex idx) {
-    assert(idx == 0 || (idx > 0 && idx <= heap_size_));
     return (idx << 1) + 1;
 }
 
 template<typename TElem>
 typename BinaryHeap<TElem>::TIndex BinaryHeap<TElem>::getRightIndex(TIndex idx) {
-    assert(idx == 0 || (idx > 0 && idx <= heap_size_));
     return (idx << 1) + 2;
 }
 
 template<typename TElem>
 void BinaryHeap<TElem>::swapElements(TIndex a, TIndex b) {
-    assert(a >= 0 && a < max_heap_size_);
-    assert(b >= 0 && b < max_heap_size_);
     using std::swap;
     swap_(elems_[a], elems_[b]);
 }
 
 template<typename TElem>
 unsigned int BinaryHeap<TElem>::getSize() const {
-    assert(heap_size_ >= 0 && heap_size_ <= max_heap_size_);
     return heap_size_;
 }
 
 template<typename TElem>
 TElem& BinaryHeap<TElem>::operator [] (TIndex idx) {
-    assert(idx >= 0 && idx <= heap_size_);
-    // just as an experiment
     return const_cast<TElem&>(static_cast<const BinaryHeap<TElem>&>(*this)[idx]);
 }
 
 template<typename TElem>
 const TElem& BinaryHeap<TElem>::operator [] (TIndex idx) const {
-    assert(idx >= 0 && idx <= heap_size_);
     return elems_[idx];
 }
 
 template<typename TElem>
 void BinaryHeap<TElem>::heapifyDown(TIndex idx) {
-    assert(idx == 0 || (idx > 0 && idx <= heap_size_));
-
     TIndex left_idx = getLeftIndex(idx);
     TIndex right_idx = getRightIndex(idx);
     TIndex max_idx = idx;
@@ -117,18 +103,14 @@ void BinaryHeap<TElem>::heapifyDown(TIndex idx) {
     }
     if (max_idx != idx) {
         swapElements(idx, max_idx);
-        assert(max_idx >= 0 && max_idx < heap_size_);
         heapifyDown(max_idx);
     }
 }
 
 template<typename TElem>
 typename BinaryHeap<TElem>::TIndex BinaryHeap<TElem>::insert(TElem elem) {
-    assert(heap_size_ + 1 <= max_heap_size_);
-
     elems_[heap_size_] = sentinel_();
     TIndex new_idx = increaseKey(elem, heap_size_);
-    assert(new_idx >= 0 && new_idx < max_heap_size_);
 
     ++heap_size_;
     return new_idx;
@@ -137,18 +119,13 @@ typename BinaryHeap<TElem>::TIndex BinaryHeap<TElem>::insert(TElem elem) {
 template<typename TElem>
 typename BinaryHeap<TElem>::TIndex BinaryHeap<TElem>::replace(TIndex prev_idx, 
                                        TElem new_elem) {
-    assert(prev_idx >= 0 && prev_idx < heap_size_);
-
     TIndex idx = increaseKey(new_elem, prev_idx);
-    assert(idx >= 0 && idx < max_heap_size_);
 
     return idx;
 }
 
 template<typename TElem>
 typename BinaryHeap<TElem>::TIndex BinaryHeap<TElem>::removeTop() {
-    assert(heap_size_ >= 1);
-    
     deleteElement(0);
     heapifyDown(0);
     return heap_size_;
@@ -156,9 +133,6 @@ typename BinaryHeap<TElem>::TIndex BinaryHeap<TElem>::removeTop() {
 
 template<typename TElem>
 typename BinaryHeap<TElem>::TIndex BinaryHeap<TElem>::remove(TIndex idx) {
-    assert(idx >= 0 && idx < heap_size_);
-    assert(heap_size_ >= 1);
-    
     deleteElement(idx);
 
     idx = heapifyUp(idx);
@@ -168,9 +142,6 @@ typename BinaryHeap<TElem>::TIndex BinaryHeap<TElem>::remove(TIndex idx) {
 
 template<typename TElem>
 typename BinaryHeap<TElem>::TIndex BinaryHeap<TElem>::increaseKey(TElem new_elem, TIndex idx) {
-    assert(idx >= 0 && idx < max_heap_size_);
-    assert(comparator_(elems_[idx], new_elem));
-
     elems_[idx] = new_elem;
     idx = heapifyUp(idx);
     return idx;
@@ -238,13 +209,6 @@ Number *getSentinel() {
     return &number;
 }
 
-void checkHeap(BinaryHeap<Number *> *heap) {
-    for (int i = 0; i < heap->getSize(); ++i) {
-        assert((*heap)[i]->heap_ptr == heap);
-        assert((*heap)[i]->heap_idx == i);
-    }
-}
-
 void swap_(Number *&one, Number *&two) {
     std::swap(one, two);
     std::swap(one->heap_idx, two->heap_idx);
@@ -305,9 +269,6 @@ void kOrderStatistics(int k,
             } 
         }
         result->push_back(less_heap.getSize() < k ? -1 : less_heap.getTop()->number);
-
-        checkHeap(&less_heap);
-        checkHeap(&greater_heap);
     }
 }
 
