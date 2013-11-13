@@ -29,7 +29,7 @@ CXXFLAGS += -g -Wall -Wextra --std=c++0x -O0 -pthread
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = hash_set_ut binary_heap_ut
+TESTS = hash_set_ut binary_heap_ut binary_search_tree_ut
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -83,4 +83,11 @@ binary_heap_ut.o : $(USER_DIR)/ut/binary_heap_ut.cpp \
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/ut/binary_heap_ut.cpp
 
 binary_heap_ut : binary_heap_ut.o gtest_main.a
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+
+binary_search_tree_ut.o : $(USER_DIR)/ut/binary_search_tree_ut.cpp \
+                     $(USER_DIR)/binary_search_tree.hpp $(GTEST_HEADERS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/ut/binary_search_tree_ut.cpp
+
+binary_search_tree_ut : binary_search_tree_ut.o gtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
