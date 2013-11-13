@@ -4,30 +4,45 @@
 #include <iostream>
 #include <chrono>
 
-typedef int TParam;
-typedef std::function <int (TParam) > HashFunction;
+class UniversalHashFunctor {
+    public:
+        UniversalHashFunctor(int a_param, int b_param, int p_param, int m_param) :
+            a_param_(a_param),
+            b_param_(b_param),
+            p_param_(p_param),
+            m_param_(m_param) {}
 
-int universalHashFunction(int k_param, int a_param, int b_param, int p_param, int m_param) {
-    unsigned long long a_l = a_param;
-    unsigned long long b_l = b_param;
-    unsigned long long k_l = k_param;
+        UniversalHashFunctor() :
+            a_param_(0),
+            b_param_(0),
+            p_param_(1),
+            m_param_(1) {}
 
-    unsigned long long factor = a_l * k_l + b_l; 
-    
-    unsigned long long result = (factor % p_param);
-    result = (result % m_param);
-    return static_cast<int>(result);
-}
+        int operator () (int k_param) const {
+            unsigned long long k_long = k_param;
+            unsigned long long factor = a_param_ * k_long + b_param_; 
 
-HashFunction pickupUniversalHashFunction(int p_param, int m_param) {
+            unsigned long long result = (factor % p_param_);
+            result = (result % m_param_);
+            return static_cast<int>(result);
+        }
+
+    private:
+        unsigned long long a_param_;
+        unsigned long long b_param_;
+        unsigned long long p_param_;
+        unsigned long long m_param_;
+};
+
+
+static UniversalHashFunctor pickupUniversalHashFunctor(int p_param, int m_param) {
     static unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
     static std::minstd_rand0 generator (seed);
 
     int a_random = std::uniform_int_distribution<int>(1, p_param - 1) (generator);
     int b_random = std::uniform_int_distribution<int>(0, p_param - 1) (generator);
 
-    return std::bind(universalHashFunction, 
-        std::placeholders::_1, a_random, b_random, p_param, m_param);
+    return UniversalHashFunctor(a_random, b_random, p_param, m_param);
 }
 
 
@@ -44,23 +59,19 @@ class HashSet {
         };
         class HashTable {
             public:
-                HashTable();
                 bool contains(int element) const;
                 void initialize(const std::vector<int> &elements);
             private:
                 int chooseSize(int size) const;
                 int getSentinel() const;
 
-                HashFunction function_;
+                UniversalHashFunctor function_;
                 std::vector<int> elements_;
         };
-        HashFunction function_;
+        UniversalHashFunctor function_;
         std::vector<HashTable> hash_tables_;
         static int adjustElement(int element);
 };
-
-HashSet::HashTable::HashTable() : 
-    function_(std::bind(universalHashFunction, std::placeholders::_1, 0, 0, 1, 1)) {}
 
 int HashSet::HashTable::chooseSize(int elems_size) const {
     return elems_size * elems_size;
@@ -79,7 +90,7 @@ void HashSet::HashTable::initialize(const std::vector<int>& elems) {
     int size = chooseSize(elems.size());
     while (!ok_function) {
         elements_ = std::vector<int>(size, Constants::SENTINEL);
-        function_ = pickupUniversalHashFunction(Constants::PRIME_NUMBER, size);
+        function_ = pickupUniversalHashFunctor(Constants::PRIME_NUMBER, size);
 
         ok_function = true;
         for (auto iter = elems.begin(); iter != elems.end(); ++iter) {
@@ -107,7 +118,7 @@ void HashSet::initialize(const std::vector<int>& elems) {
     int size = elems.size();
     std::vector<std::vector <int> > collisions(size);
 
-    function_ = pickupUniversalHashFunction(Constants::PRIME_NUMBER, size);
+    function_ = pickupUniversalHashFunctor(Constants::PRIME_NUMBER, size);
     
     for (auto iter = elems.begin(); iter != elems.end(); ++iter) {
         int elem = adjustElement(*iter);
