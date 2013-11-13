@@ -89,7 +89,7 @@ void HashSet::HashTable::initialize(const std::vector<int>& elems) {
 
     int size = chooseSize(elems.size());
     while (!ok_function) {
-        elements_ = std::vector<int>(size, Constants::SENTINEL);
+        elements_.assign(size, Constants::SENTINEL);
         function_ = pickupUniversalHashFunctor(Constants::PRIME_NUMBER, size);
 
         ok_function = true;
@@ -156,10 +156,12 @@ int main() {
     set.initialize(elements);
 
     std::cin >> size;
-    int query;
+    std::vector<int> queries(size);
     for (int i = 0; i < size; ++i) {
-        std::cin >> query;
-        if (set.contains(query)) {
+        std::cin >> queries[i];
+    }
+    for (auto query = queries.begin(); query != queries.end(); ++query) {
+        if (set.contains(*query)) {
             std::cout << "Yes\n";
         } else {
             std::cout << "No\n";
