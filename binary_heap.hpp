@@ -90,7 +90,7 @@ void BinaryHeap<TKey, TValue>::swapElements(TIndex a, TIndex b) {
 
 template<typename TKey, typename TValue>
 unsigned int BinaryHeap<TKey, TValue>::getSize() const {
-    assert(heap_size_ >= 0 && heap_size_ <= max_heap_size_);
+    assert(heap_size_ <= max_heap_size_);
     return heap_size_;
 }
 

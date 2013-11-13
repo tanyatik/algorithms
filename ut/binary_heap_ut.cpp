@@ -69,30 +69,30 @@ TEST(heap_test, extract_max) {
     h.insert(8, 11);
 
     testHeap(h, {20, 17, 11, 15, 9, 1, 3, 5, 6, 7, 8, 0, 0}, {1, 9, 3, 2, 5, 6, 7, 8, 4, 10, 11, 0, 0});
-    ASSERT_EQ(h.extractMax(), 1);
+    ASSERT_EQ(h.extractTop(), 1);
     testHeap(h, {17, 15, 11, 8, 9, 1, 3, 5, 6, 7, 0, 0, 0}, {9, 2, 3, 11, 5, 6, 7, 8, 4, 10, 0, 0, 0});
-    ASSERT_EQ(h.extractMax(), 9);
+    ASSERT_EQ(h.extractTop(), 9);
     testHeap(h, {15, 9, 11, 8, 7, 1, 3, 5, 6, 0, 0, 0, 0}, {2, 5, 3, 11, 10, 6, 7, 8, 4, 0, 0, 0, 0});
-    ASSERT_EQ(h.extractMax(), 2);
+    ASSERT_EQ(h.extractTop(), 2);
     testHeap(h, {11, 9, 6, 8, 7, 1, 3, 5, 0, 0, 0, 0, 0}, {3, 5, 4, 11, 10, 6, 7, 8, 0, 0, 0, 0, 0});
-    ASSERT_EQ(h.extractMax(), 3);
+    ASSERT_EQ(h.extractTop(), 3);
     testHeap(h, {9, 8, 6, 5, 7, 1, 3, 0, 0, 0, 0, 0, 0}, {5, 11, 4, 8, 10, 6, 7, 0, 0, 0, 0, 0, 0});
-    ASSERT_EQ(h.extractMax(), 5);
+    ASSERT_EQ(h.extractTop(), 5);
     testHeap(h, {8, 7, 6, 5, 3, 1, 0, 0, 0, 0, 0, 0, 0}, {11, 10, 4, 8, 7, 6, 0, 0, 0, 0, 0, 0, 0});
-    ASSERT_EQ(h.extractMax(), 11);
+    ASSERT_EQ(h.extractTop(), 11);
     testHeap(h, {7, 5, 6, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0}, {10, 8, 4, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0});
-    ASSERT_EQ(h.extractMax(), 10);
+    ASSERT_EQ(h.extractTop(), 10);
     testHeap(h, {6, 5, 3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {4, 8, 7, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0});
-    ASSERT_EQ(h.extractMax(), 4);
+    ASSERT_EQ(h.extractTop(), 4);
     testHeap(h, {5, 1, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {8, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
-    ASSERT_EQ(h.extractMax(), 8);
+    ASSERT_EQ(h.extractTop(), 8);
     testHeap(h, {3, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {7, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
-    ASSERT_EQ(h.extractMax(), 7);
+    ASSERT_EQ(h.extractTop(), 7);
     testHeap(h, {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, {6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
-    ASSERT_EQ(h.extractMax(), 6);
+    ASSERT_EQ(h.extractTop(), 6);
     h.insert(20, 1);
     testHeap(h, {20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},  {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0});
-    ASSERT_EQ(h.extractMax(), 1);
+    ASSERT_EQ(h.extractTop(), 1);
 }
 
 TEST(heap_test, removals) {
@@ -122,42 +122,6 @@ TEST(heap_test, removals) {
                 {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0});
 
 }
-
-TEST(heap_test, all_operations) {
-    TestHeap h(8);
-    h.debugPrint();
-    h.insert(1000, 0);
-    h.debugPrint();
-    h.extractMax();
-    h.debugPrint();
-    h.insert(1000, 1);
-    h.debugPrint();
-    h.extractMax();
-    h.debugPrint();
-    h.insert(800, 2);
-    h.debugPrint();
-    h.extractMax();
-    h.debugPrint();
-    h.insert(600, 3);
-    h.debugPrint();
-    h.extractMax();
-    h.debugPrint();
-    h.insert(400, 4);
-    h.debugPrint();
-    h.extractMax();
-    h.debugPrint();
-    h.insert(200, 5);
-    h.debugPrint();
-    h.extractMax();
-    h.debugPrint();
-    h.insert(200, 6);
-    h.debugPrint();
-    h.insert(200, 7);
-    h.debugPrint();
-    h.extractMax();
-    h.debugPrint();
-}
-
 
 GTEST_API_ int main(int argc, char **argv) {
     printf("Running main() from gtest_main.cc\n");
