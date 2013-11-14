@@ -1,4 +1,5 @@
 #include <vector>
+#include <stack>
 
 template<typename TElem>
 struct TraitsSentinel;
@@ -7,7 +8,12 @@ template<typename TElem>
 class BinarySearchTree {
     public:
         BinarySearchTree();
-        void initPreorder(std::vector<TElem> vec);
+        void initPreorderRecursion(std::vector<TElem> vec);
+        void initPreorderNoRecursion(std::vector<TElem> vec);
+        void outputInorder() const;
+        std::vector<TElem> outputPostorderNoRecursion() const;
+        std::vector<TElem> outputPostorderRecursion() const;
+        void debugPrint() const;
 
     private:
         struct Node {
@@ -17,6 +23,13 @@ class BinarySearchTree {
                 
                 void setLeft(Node *left);
                 void setRight(Node *right);
+                const Node *getLeft() const;
+                const Node *getRight() const;
+                const Node *getParent() const;
+                Node *getLeft();
+                Node *getRight();
+                Node *getParent();
+
                 const TElem &getData() const;
 
                 void debugPrint() const;
@@ -26,11 +39,25 @@ class BinarySearchTree {
                 Node *parent_;
                 TElem data_;
         };
+        struct NodeTraverse {
+            public:
+                Node *node;
+                bool visited;
+
+                NodeTraverse() : 
+                    node(nullptr), 
+                    visited(false) {}
+                NodeTraverse(Node *node) :
+                    node(node),
+                    visited(false) {}
+        };
 
         Node *addNode(const TElem &value);
-        Node *initPreorderInner(typename std::vector<TElem>::iterator &iter, const TElem &max_value);
-        void debugPrint() const;
+        Node *initPreorderInnerRecursion(typename std::vector<TElem>::iterator &iter, const TElem &max_value);
+        Node *initPreorderInnerNoRecursion(typename std::vector<TElem>::iterator &iter, const TElem &max_value);
 
+        void outputPostorderInnerRecursion(const Node *current, std::vector<TElem> *output) const;
+        void outputPostorderInnerNoRecursion(std::vector<TElem> *output) const;
         //std::vector<Node> nodes_;
         Node nodes_[1000];
         Node *end_nodes_;
@@ -64,6 +91,38 @@ void BinarySearchTree<TElem>::Node::setRight(Node *right) {
 }
 
 template<typename TElem>
+typename BinarySearchTree<TElem>::Node const *BinarySearchTree<TElem>::Node::getLeft() const {
+    return left_;
+}
+
+template<typename TElem>
+typename BinarySearchTree<TElem>::Node const *BinarySearchTree<TElem>::Node::getRight() const {
+    return right_;
+}
+
+template<typename TElem>
+typename BinarySearchTree<TElem>::Node const *BinarySearchTree<TElem>::Node::getParent() const {
+    assert(parent_);
+    return parent_;
+}
+
+template<typename TElem>
+typename BinarySearchTree<TElem>::Node *BinarySearchTree<TElem>::Node::getLeft() {
+    return left_;
+}
+
+template<typename TElem>
+typename BinarySearchTree<TElem>::Node *BinarySearchTree<TElem>::Node::getRight() {
+    return right_;
+}
+
+template<typename TElem>
+typename BinarySearchTree<TElem>::Node *BinarySearchTree<TElem>::Node::getParent() {
+    assert(parent_);
+    return parent_;
+}
+
+template<typename TElem>
 void BinarySearchTree<TElem>::Node::debugPrint() const {
     std::cout << data_ << ' ';
 }
@@ -79,48 +138,107 @@ BinarySearchTree<TElem>::BinarySearchTree() {
 }
 
 template<typename TElem>
-void BinarySearchTree<TElem>::initPreorder(std::vector<TElem> vec) {
+void BinarySearchTree<TElem>::initPreorderRecursion(std::vector<TElem> vec) {
     auto max_sentinel = TraitsSentinel<TElem>::getMaxSentinel();
     vec.push_back(max_sentinel);
     auto iter = vec.begin();
-    root_ = initPreorderInner(iter, max_sentinel);
+    root_ = initPreorderInnerRecursion(iter, max_sentinel);
+}
+
+template<typename TElem>
+void BinarySearchTree<TElem>::initPreorderNoRecursion(std::vector<TElem> vec) {
+    auto max_sentinel = TraitsSentinel<TElem>::getMaxSentinel();
+    vec.push_back(max_sentinel);
+    auto iter = vec.begin();
+    root_ = initPreorderInnerNoRecursion(iter, max_sentinel);
 }
 
 template<typename TElem>
 typename BinarySearchTree<TElem>::Node *
-BinarySearchTree<TElem>::initPreorderInner(typename std::vector<TElem>::iterator &iter,
+BinarySearchTree<TElem>::initPreorderInnerRecursion(typename std::vector<TElem>::iterator &iter,
                                            const TElem &max_value) {
     Node *new_node = addNode(*iter++);
     if (*iter < max_value) {
-        new_node->setLeft(initPreorderInner(iter, new_node->getData()));
+        new_node->setLeft(initPreorderInnerRecursion(iter, new_node->getData()));
     }
     if (*iter < max_value) {
-        new_node->setRight(initPreorderInner(iter, max_value));
+        new_node->setRight(initPreorderInnerRecursion(iter, max_value));
     }
     return new_node;
 }
 
 template<typename TElem>
 typename BinarySearchTree<TElem>::Node *
-BinarySearchTree<TElem>::initPreorderNoRecursion(typename std::vector<TElem>::iterator &iter,
+BinarySearchTree<TElem>::initPreorderInnerNoRecursion(typename std::vector<TElem>::iterator &iter,
                                            const TElem &max_value) {
     std::stack<TElem> stack;
-    stack.push_back(max_value);
-    Node *current_node = new_node;
+    stack.push(max_value);
+    Node *current_node = addNode(*iter++);
+
     while(!stack.empty()) {
-        current_node = addNode(*iter++);
-        if (*iter < stack.top()) {
+        if (!current_node->getLeft() && *iter < stack.top()) {
             stack.push(current_node->getData());
-            current_node = current_node->left();
+            current_node->setLeft(addNode(*iter++));
+            current_node = current_node->getLeft();
             continue;
         }
         if (*iter < stack.top()) {
             stack.push(stack.top());
-            current_node = current_node->right();
+            current_node->setRight(addNode(*iter++));
+            current_node = current_node->getRight();
             continue;
         }
         stack.pop();
-        current_node = current_node->parent();
+        if (!stack.empty()) {
+            current_node = current_node->getParent();
+        }
+    }
+    return current_node;
+}
+
+
+template<typename TElem>
+std::vector<TElem> BinarySearchTree<TElem>::outputPostorderRecursion() const {
+    std::vector<TElem> output;
+    outputPostorderInnerRecursion(root_, &output);
+    return output;
+}
+
+template<typename TElem>
+std::vector<TElem> BinarySearchTree<TElem>::outputPostorderNoRecursion() const {
+    std::vector<TElem> output;
+    outputPostorderInnerNoRecursion(&output);
+    return output;
+}
+
+template<typename TElem>
+void BinarySearchTree<TElem>::outputPostorderInnerRecursion(const Node *current, std::vector<TElem> *output) const {
+    if (current->getLeft()) {
+        outputPostorderInnerRecursion(current->getLeft(), output);
+    }
+    if (current->getRight()) {
+        outputPostorderInnerRecursion(current->getRight(), output);
+    }
+    output->push_back(current->getData());
+}
+
+
+template<typename TElem>
+void BinarySearchTree<TElem>::outputPostorderInnerNoRecursion(std::vector<TElem> *output) const {
+    std::stack<Node *> stack;
+    stack.push(root_, false);
+
+    while(!stack.empty()) {
+        if (stack.top()->getLeft()) {
+            stack.push(std::make_pair(stack.top()->getLeft(), false));
+            continue;
+        }
+        if (stack.top()->getRight()) {
+            stack.push(std::make_pair(stack.top()->getRight(), false));
+            continue;
+        }
+        output->push_back(stack.top()->getData());
+        stack.pop();
     }
 }
 
@@ -130,42 +248,12 @@ typename BinarySearchTree<TElem>::Node *BinarySearchTree<TElem>::addNode(const T
     auto ret = end_nodes_;
     ++end_nodes_;
     return ret;
-    //nodes_.push_back(Node(value));
-    //return &nodes_.back();
 }
 
 template<typename TElem>
 void BinarySearchTree<TElem>::debugPrint() const {
-    for(Node *ptr = nodes_; ptr != end_nodes_; ++ptr) {
+    for(const Node *ptr = nodes_; ptr != end_nodes_; ++ptr) {
         ptr->debugPrint();
     }
+    std::cout << std::endl;
 }
-/*
-template<typename TElem>
-void BinarySearchTree::initPreorder(std::vector<TElem> vec_preorder) {
-    std::stack<TElem> stack;
-    auto iter = vec_preorder.begin(); 
-
-    stack.push(vec_preorder.front());
-    *root_ = Node(*iter++);
-    Node *current = root_;
-
-    for (iter != vec_preorder.end()) {
-        if(*iter < stack.top()) {
-            addLeftChild(current);
-            current = current->left();
-            stack.push(*iter++);
-            continue;
-        } 
-        if (*iter < stack.top()) {
-            addRightChild(current);
-            current = current->right();
-            stack.push(*iter++);
-            continue;
-        }
-        current->setData(stack.top());
-        stack.pop();
-        current = current->parent();
-    }
-}
-*/
