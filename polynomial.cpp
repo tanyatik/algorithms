@@ -1,8 +1,10 @@
 #include <vector>
-#include <algorighm>
+#include <algorithm>
 #include <iostream>
 #include <complex>
 #include <assert.h>
+
+#define not_explicit 
 
 template<typename TValue>
 class Polynomial;
@@ -28,7 +30,7 @@ const Polynomial<TValue> doGreatestCommonDivisor(const Polynomial<TValue>& one,
 template<typename TValue>
 class Polynomial {
     public:
-        /*explicit*/ Polynomial(TValue val);
+        not_explicit Polynomial(TValue val);
         Polynomial(typename std::vector<TValue>::iterator begin_iter, 
                    typename std::vector<TValue>::iterator end_iter);
         
@@ -182,7 +184,8 @@ bool Polynomial<TValue>::equals (const Polynomial<TValue> &other) const {
 }
 
 template<typename TValue> 
-const Polynomial<TValue> doMultiply (const Polynomial<TValue> &one, const Polynomial<TValue> &other) {
+const Polynomial<TValue> doMultiply (const Polynomial<TValue> &one, 
+                                     const Polynomial<TValue> &other) {
     std::vector<TValue> new_coefficients(one.maxDegree() + other.maxDegree() + 1, (TValue()));
 
     for (int one_degree = 0; one_degree <= one.maxDegree(); ++one_degree) {
@@ -210,7 +213,8 @@ const Polynomial<TValue> doSum (const Polynomial<TValue> &one, const Polynomial<
 }
 
 template<typename TValue> 
-const Polynomial<TValue> doSubtract (const Polynomial<TValue> &one, const Polynomial<TValue> &other) {
+const Polynomial<TValue> doSubtract (const Polynomial<TValue> &one, 
+                                     const Polynomial<TValue> &other) {
     std::vector<TValue> new_coefficients(std::max(one.maxDegree(), other.maxDegree()) + 1);
     for (int degree = 0; degree <= one.maxDegree(); ++degree) {
         new_coefficients[degree] = one[degree];
@@ -222,13 +226,16 @@ const Polynomial<TValue> doSubtract (const Polynomial<TValue> &one, const Polyno
 }
 
 template<typename TValue>
-void divideByModulus(const Polynomial<TValue> &dividend, const Polynomial<TValue> &divisor, Polynomial<TValue> *result_quotient, Polynomial<TValue> *result_rest) {
+void divideByModulus(const Polynomial<TValue> &dividend, 
+                     const Polynomial<TValue> &divisor, 
+                     Polynomial<TValue> *result_quotient, 
+                     Polynomial<TValue> *result_rest) {
     int quotient_degree = dividend.maxDegree() - divisor.maxDegree();
     assert(quotient_degree >= 0);
     Polynomial<TValue> quotient((TValue()));
 
     Polynomial<TValue> current_dividend = dividend;
-    while (current_dividend.maxDegree() > divisor.maxDegree() && !current_quotient.isNull()) {
+    while (divisor.maxDegree() <= current_dividend.maxDegree()) {
         int current_quotient_degree = current_dividend.maxDegree() - divisor.maxDegree();
         assert(current_quotient_degree >= 0);
         std::vector<TValue> temp_coef(current_quotient_degree + 1);
@@ -240,6 +247,10 @@ void divideByModulus(const Polynomial<TValue> &dividend, const Polynomial<TValue
 
         Polynomial<TValue> deduction = current_quotient * divisor;
         current_dividend = current_dividend - deduction;
+
+        if (current_quotient.isNull()) {
+            break;
+        }
     }
 
     *result_quotient = quotient;
@@ -346,38 +357,75 @@ void checkArithmetics(Polynomial<TValue> first,
 }
 
 int main() {
-    std::vector<int> vec_int_first = {6, 11, 6, 1, 0, 0, 0};
-    std::vector<int> vec_int_second = {1, 3, 1, 0};
-
+    std::vector<int> vec_int_first(7);
+    vec_int_first[0] = 6;
+    vec_int_first[1] = 11;
+    vec_int_first[2] = 6;
+    vec_int_first[3] = 1;
+    
+    std::vector<int> vec_int_second(4);
+    vec_int_second[0] = 1;
+    vec_int_second[1] = 3;
+    vec_int_second[2] = 1;
+    
     Polynomial<int> polly_int_first = Polynomial<int>(vec_int_first.begin(), vec_int_first.end());
-    Polynomial<int> polly_int_second = Polynomial<int>(vec_int_second.begin(), vec_int_second.end());
+    Polynomial<int> polly_int_second = 
+        Polynomial<int>(vec_int_second.begin(), vec_int_second.end());
 
     checkArithmetics(polly_int_first, polly_int_second, 3);
     std::cout << std::endl;
 
-    std::vector<int> vec_double_third = {1, 0, 1, 0, 1};
-    Polynomial<int> polly_int_third = Polynomial<int>(vec_double_third.begin(), vec_double_third.end());
+    std::vector<int> vec_double_third(5);
+    vec_double_third[0] = 1;
+    vec_double_third[1] = 0;
+    vec_double_third[2] = 1;
+    vec_double_third[3] = 0;
+    vec_double_third[4] = 1;
+
+    Polynomial<int> polly_int_third = Polynomial<int>(vec_double_third.begin(),     
+                                                      vec_double_third.end());
     checkArithmetics<int>(polly_int_third, polly_int_first, -1);
     std::cout << std::endl;
 
-    std::vector<double> vec_double_first = {-1.89, -3.45, -9.00};
-    std::vector<double> vec_double_second = {1.5, 3.2};
+    std::vector<double> vec_double_first(3);
+    vec_double_first[0] = -1.89;
+    vec_double_first[1] = -3.45;
+    vec_double_first[2] = -9.00;
 
-    Polynomial<double> polly_double_first = Polynomial<double>(vec_double_first.begin(), vec_double_first.end());
-    Polynomial<double> polly_double_second = Polynomial<double>(vec_double_second.begin(), vec_double_second.end());
+    std::vector<double> vec_double_second(2);
+    vec_double_second[0] = 1.5;
+    vec_double_second[1] = 3.2;
+
+    Polynomial<double> polly_double_first = 
+        Polynomial<double>(vec_double_first.begin(), vec_double_first.end());
+    Polynomial<double> polly_double_second = 
+        Polynomial<double>(vec_double_second.begin(), vec_double_second.end());
     checkArithmetics(polly_double_first, polly_double_second, 3.1415);
     std::cout << std::endl;
 
-    std::vector<int> small_vec_int_first = {1, 3};
-    std::vector<int> small_vec_int_second = {0, 0, 3};
+    std::vector<int> small_vec_int_first(2);
+    small_vec_int_first[0] = 1;
+    small_vec_int_first[1] = 3;
+    
+    std::vector<int> small_vec_int_second(3);
+    small_vec_int_second[0] = 0;
+    small_vec_int_second[1] = 0;
+    small_vec_int_second[2] = 3;
 
-    Polynomial<int> polly_int_fourth = polly_int_first * Polynomial<int>(small_vec_int_first.begin(), small_vec_int_first.end());
-    Polynomial<int> polly_int_fifth = polly_int_first * Polynomial<int>(small_vec_int_second.begin(), small_vec_int_second.end());
+    Polynomial<int> polly_int_fourth = 
+        polly_int_first * Polynomial<int>(small_vec_int_first.begin(), 
+                                          small_vec_int_first.end());
+    Polynomial<int> polly_int_fifth = 
+        polly_int_first * Polynomial<int>(small_vec_int_second.begin(),
+                                          small_vec_int_second.end());
 
     Polynomial<int> gcd = (polly_int_fourth , polly_int_fifth); // greatest common divisor
-    std::cout << "gcd (" << polly_int_fourth << ", " << polly_int_fifth << ") = " << gcd << std::endl;
+    std::cout << "gcd (" << polly_int_fourth << ", " << polly_int_fifth << ") = " << 
+        gcd << std::endl;
 
-    for (std::vector<int>::const_iterator it = gcd.beginCoefficient(); it != gcd.endCoefficient(); ++it) {
+    for (std::vector<int>::const_iterator it = gcd.beginCoefficient(); 
+         it != gcd.endCoefficient(); 
+         ++it) {
         std::cout << *it << ' ';
     }
     std::cout << std::endl;
@@ -392,8 +440,9 @@ int main() {
     std::cout << polly_int_first << " at x = -3: " << polly_int_first(-3) << std::endl;
     std::cout << polly_double_first << " at x = -0.75: " << polly_double_first(-0.75) << std::endl;
 
-    std::vector<std::complex<double>> complex_vec = {{0, 1}, {1, 0}, {-1, -1}};
-    Polynomial<std::complex<double>> complex_polly(complex_vec.begin(), complex_vec.end());
-    std::cout << "complex polly : " << complex_polly << std::endl;
-    std::cout << complex_polly << " at x = i : " << complex_polly(std::complex<double>(0, 1)) << std::endl;
+//    std::vector<std::complex<double>> complex_vec = { {0, 1}, {1, 0}, {-1, -1} };
+//    Polynomial<std::complex<double>> complex_polly(complex_vec.begin(), complex_vec.end());
+//    std::cout << "complex polly : " << complex_polly << std::endl;
+//    std::cout << complex_polly << " at x = i : " << 
+//        complex_polly(std::complex<double>(0, 1)) << std::endl;
 }
