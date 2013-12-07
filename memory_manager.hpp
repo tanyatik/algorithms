@@ -3,28 +3,27 @@
 #include <vector>
 #include <iostream>
 #include <algorithm>
-#include <assert.h>
-
 
 template <typename TElement>
 class BinaryHeap {
     public:
         typedef long long TIndex;
         typedef TElement TElementType;
+        typedef std::function < bool (TElement, TElement) > TComparator;
 
         explicit BinaryHeap(std::size_t max_size);
         BinaryHeap(std::size_t max_size, 
-                   std::function<bool(TElement, TElement)> comparator);
+                   TComparator comparator);
 
+        // Removes element on the top of the heap
         void pop();
-        const TElement& getTop() const;
-        
+        const TElement& getTop() const; 
         void insert(const TElement& element);
-
+        // Removes element which is located by index, keeping all heap properties
         void removeElementByIndex (TIndex index);
         
-        void debugPrint() const;
         const std::vector<TElement>& getElements() const;
+        // Number of elements kept in the heap
         unsigned int getSize() const;
 
     private:
@@ -33,19 +32,92 @@ class BinaryHeap {
         void heapifyDown(TIndex index);
         TIndex heapifyUp(TIndex index);
 
-        TIndex increaseKey(TElement new_element, TIndex index);
         void swapElements(TIndex a, TIndex b);
 
         TIndex getParentIndex(TIndex index);
         TIndex getLeftIndex(TIndex index);
         TIndex getRightIndex(TIndex index);
 
+        // Helper function -- swaps element with index 'index' 
+        // with last element of the heap,
+        // and then removes last element
         void deleteElement(TIndex index);
 
         unsigned int heap_size_;
         unsigned int max_heap_size_;
         std::vector<TElement> elements_;
-        std::function<bool(TElement, TElement)> comparator_;
+        TComparator comparator_;
+};
+
+class MemoryBlock {
+private:
+    unsigned int size_;
+    unsigned int position_;
+    // All blocks are connnected in two-forked linked list
+    // Each block has to know its predecessor and successor,
+    // to complete merging of two free blocks placed side by side
+    // Previous and next block can be either in the heap of free blocks,
+    // or in the array of occupied blocks
+    MemoryBlock *previous_block_;
+    MemoryBlock *next_block_;
+
+    // Stores index in heap of free blocks,
+    // or OCCUPIED_BLOCK if this block is not in this heap
+    int free_heap_index_;
+
+public:
+    static const int OCCUPIED_BLOCK = -1;
+
+    MemoryBlock();
+    MemoryBlock(unsigned int size, 
+                unsigned int position, 
+                long long free_heap_index);
+
+    unsigned int getSize() const;
+
+    unsigned int getPosition() const;
+
+    MemoryBlock *getPreviousBlock() const;
+    void setPreviousBlock(MemoryBlock *previous_block);
+
+    MemoryBlock *getNextBlock() const;
+    void setNextBlock(MemoryBlock *next_block);
+
+    int getFreeHeapIndex() const;
+    void setFreeHeapIndex(int free_heap_index);
+};
+
+class MemoryManager {
+    public:
+        MemoryManager(unsigned memory_cells_number, unsigned int max_request_number);
+        ~MemoryManager();
+
+        long long allocate(unsigned int block_size);
+        void deallocate(unsigned int request_number);
+
+    private:
+        unsigned int memory_cells_number_;
+        unsigned int request_total_number_;
+        unsigned int request_counter_;
+
+        // Indices in the array are number of queries
+        // Each array element with index 'i' stores either a occupied block,
+        // which was allocated as result of request number 'i',
+        // or nullptr to indicate that no block was allocated on request number 'i' 
+        std::vector<MemoryBlock*> occupied_blocks_;
+        // Stores all free blocks 
+        // There can be no free blocks placed side-by-side
+        // When free block is occupied, it is deleted from the heap
+        BinaryHeap<MemoryBlock*> free_blocks_;
+
+        void connectBlocks(MemoryBlock *previous, MemoryBlock *next);
+        bool isOccupied(const MemoryBlock *block) const;
+
+        MemoryBlock *createNewFreeBlock(unsigned int size, unsigned int position);
+        MemoryBlock *createNewOccupiedBlock(unsigned int size, unsigned int position);
+
+        void releaseOccupiedBlock(unsigned int request_number);
+        void releaseFreeBlock(MemoryBlock **block_pointer);
 };
 
 template<typename TElement>
@@ -60,7 +132,7 @@ BinaryHeap<TElement>::BinaryHeap(std::size_t max_size) :
 
 template<typename TElement>
 BinaryHeap<TElement>::BinaryHeap(std::size_t max_size, 
-                                 std::function<bool(TElement, TElement)> comparator) : 
+                                 TComparator comparator) : 
     heap_size_(0),
     max_heap_size_(max_size),
     elements_(max_heap_size_),
@@ -73,8 +145,6 @@ bool BinaryHeap<TElement>::compareElements(const TElement &one, const TElement &
 
 template<typename TElement>
 const TElement &BinaryHeap<TElement>::getTop() const {
-    assert(heap_size_ >= 1);
-    
     return elements_[0];
 }
 
@@ -85,41 +155,33 @@ const std::vector<TElement> &BinaryHeap<TElement>::getElements() const {
 
 template<typename TElement>
 typename BinaryHeap<TElement>::TIndex BinaryHeap<TElement>::getParentIndex(TIndex index) {
-    assert(index < max_heap_size_);
-    if(index <= 0) return -1;
+    if (index <= 0) return -1;
     return (index - 1) >> 1;
 }
 
 template<typename TElement>
 typename BinaryHeap<TElement>::TIndex BinaryHeap<TElement>::getLeftIndex(TIndex index) {
-    assert(index == 0 || (index > 0 && index < heap_size_));
     return (index << 1) + 1;
 }
 
 template<typename TElement>
 typename BinaryHeap<TElement>::TIndex BinaryHeap<TElement>::getRightIndex(TIndex index) {
-    assert(index == 0 || (index > 0 && index < heap_size_));
     return (index << 1) + 2;
 }
 
 template<typename TElement>
 void BinaryHeap<TElement>::swapElements(TIndex a, TIndex b) {
-    assert(a >= 0 && a < max_heap_size_);
-    assert(b >= 0 && b < max_heap_size_);
     using std::swap;
     swap(elements_[a], elements_[b]);
 }
 
 template<typename TElement>
 unsigned int BinaryHeap<TElement>::getSize() const {
-    assert(heap_size_ <= max_heap_size_);
     return heap_size_;
 }
 
 template<typename TElement>
 void BinaryHeap<TElement>::heapifyDown(TIndex index) {
-    assert(index == 0 || (index > 0 && index < heap_size_));
-
     TIndex left_index = getLeftIndex(index);
     TIndex right_index = getRightIndex(index);
     TIndex max_index = index;
@@ -132,52 +194,32 @@ void BinaryHeap<TElement>::heapifyDown(TIndex index) {
     }
     if (max_index != index) {
         swapElements(index, max_index);
-        assert(max_index >= 0 && max_index < heap_size_);
         heapifyDown(max_index);
     }
 }
 
 template<typename TElement>
 void BinaryHeap<TElement>::insert(const TElement &element) {
-    assert(heap_size_ + 1 <= max_heap_size_);
-
     elements_[heap_size_] = element;
-    TIndex new_index = heapifyUp(heap_size_);
-    assert(new_index >= 0 && new_index <= heap_size_);
+    heapifyUp(heap_size_);
 
     ++heap_size_;
 }
 
 template<typename TElement>
 void BinaryHeap<TElement>::pop() {
-    assert(heap_size_ >= 1);
-    
     deleteElement(0);
     heapifyDown(0);
 }
 
 template<typename TElement>
 void BinaryHeap<TElement>::removeElementByIndex(TIndex index) {
-    assert(index >= 0 && index < heap_size_);
-    assert(heap_size_ >= 1);
-    
     deleteElement(index);
     
     if (index < heap_size_) {
         index = heapifyUp(index);
-        assert(index >= 0 && index <= heap_size_);
         heapifyDown(index);
     }
-}
-
-template<typename TElement>
-typename BinaryHeap<TElement>::TIndex BinaryHeap<TElement>::increaseKey(TElement new_element, TIndex index) {
-    assert(index >= 0 && index < max_heap_size_);
-    assert(compareElements(elements_[index], new_element));
-
-    elements_[index] = new_element;
-    index = heapifyUp(index);
-    return index;
 }
 
 template<typename TElement>
@@ -191,7 +233,7 @@ template<typename TElement>
 typename BinaryHeap<TElement>::TIndex BinaryHeap<TElement>::heapifyUp(TIndex index) {
     TIndex parent_index = getParentIndex(index);
 
-    while(index > 0 && compareElements(elements_[parent_index], elements_[index])) {
+    while (index > 0 && compareElements(elements_[parent_index], elements_[index])) {
         swapElements(index, parent_index);
         index = parent_index;
         parent_index = getParentIndex(index);
@@ -199,114 +241,78 @@ typename BinaryHeap<TElement>::TIndex BinaryHeap<TElement>::heapifyUp(TIndex ind
     return index;
 }
 
-template<typename TElement>
-void BinaryHeap<TElement>::debugPrint() const {
-    for(auto element = elements_.begin(); element != elements_.end(); ++element) {
-        /*if (*element) {
-            (*element)->debugPrint();
-            std::cout << '\t';
-        }*/
-        std::cout << *element << '\t';
-    }
-    std::cout << "\n";
-}
-
-// MemoryBlock
-class MemoryBlock {
-public:
-    unsigned int size;
-    unsigned int position;
-    MemoryBlock *p_prev;
-    MemoryBlock *p_next;
-    int free_heap_index; // stores -1 if block is occupied
-
-    MemoryBlock();
-    MemoryBlock(unsigned int size, 
-                unsigned int position, 
-                long long free_heap_index);
-    void debugPrint() const;
-};
-
 MemoryBlock::MemoryBlock() :
-    size(0),
-    position(0),
-    p_prev(nullptr), 
-    p_next(nullptr),
-    free_heap_index(0) {}
+    size_(0),
+    position_(0),
+    previous_block_(nullptr), 
+    next_block_(nullptr),
+    free_heap_index_(0) {}
 
 MemoryBlock::MemoryBlock(unsigned int size, unsigned int position, long long free_heap_index) :
-    size(size),
-    position(position),
-    p_prev(nullptr), 
-    p_next(nullptr),
-    free_heap_index(free_heap_index) {}
+    size_(size),
+    position_(position),
+    previous_block_(nullptr), 
+    next_block_(nullptr),
+    free_heap_index_(free_heap_index) {}
 
-void MemoryBlock::debugPrint() const {
-    std::cout << "[p" << position << ":s" << size << ':' 
-        << free_heap_index  << "]";
+unsigned int MemoryBlock::getSize() const {
+    return size_;
 }
 
+unsigned int MemoryBlock::getPosition() const {
+    return position_;
+}
+
+MemoryBlock *MemoryBlock::getPreviousBlock() const {
+    return previous_block_;
+}
+
+MemoryBlock *MemoryBlock::getNextBlock() const {
+    return next_block_;
+}
+
+void MemoryBlock::setPreviousBlock(MemoryBlock *previous_block) {
+    previous_block_ = previous_block;
+}
+
+void MemoryBlock::setNextBlock(MemoryBlock *next_block) {
+    next_block_ = next_block;
+}
+
+int MemoryBlock::getFreeHeapIndex() const {
+    return free_heap_index_;
+}
+
+void MemoryBlock::setFreeHeapIndex(int free_heap_index) {
+    free_heap_index_ = free_heap_index;
+}
+
+
 bool memoryBlocksComparator (const MemoryBlock *one, const MemoryBlock *other) {
-    return ((one->size < other->size) || 
-            (one->size == other->size && one->position > other->position));
+    return ((one->getSize() < other->getSize()) || 
+            (one->getSize() == other->getSize() && one->getPosition() > other->getPosition()));
 }
 
 void swap (MemoryBlock *&one, MemoryBlock *&other) {
-    std::swap(one->free_heap_index, other->free_heap_index);
+    int temp = one->getFreeHeapIndex();
+    one->setFreeHeapIndex(other->getFreeHeapIndex());
+    other->setFreeHeapIndex(temp);
+
     std::swap(one, other);
 }
 
-std::ostream &operator << (std::ostream &stream, MemoryBlock *block) {
-    if (block) {
-        block->debugPrint();
-    }
-    return stream;
-}
-
-// Memory manager
-class MemoryManager {
-    public:
-        MemoryManager(unsigned memory_cells_number, unsigned int max_query_number);
-        ~MemoryManager();
-
-        long long allocate(unsigned int block_size);
-        void deallocate(unsigned int query_number);
-        void debugPrint() const;
-    private:
-        unsigned int memory_cells_number_;
-        unsigned int query_number_;
-        unsigned int query_counter_;
-        std::vector<MemoryBlock*> occupied_blocks_;
-         
-        BinaryHeap<MemoryBlock*> free_blocks_;
-        MemoryBlock *head_;
-
-        void connectBlocks(MemoryBlock *one, MemoryBlock *other);
-        bool isOccupied(const MemoryBlock *block) const;
-
-        void releaseOccupiedBlock(unsigned int query_number);
-        void setOccupiedBlock(MemoryBlock *biggest_block);
-        void releaseFreeBlock(MemoryBlock **block_pointer);
-        MemoryBlock *createNewFreeBlock(unsigned int size, unsigned int position);
-        MemoryBlock *createNewOccupiedBlock(unsigned int size, unsigned int position);
-        void setOccupiedBlockFree(MemoryBlock *occupied_block, unsigned int query_number);
-        void setFreeBlockOccupied(MemoryBlock *occupied_block);
-};
-
-MemoryManager::MemoryManager(unsigned int memory_cells_number, unsigned int query_number) :
+MemoryManager::MemoryManager(unsigned int memory_cells_number, unsigned int request_total_number) :
     memory_cells_number_(memory_cells_number),
-    query_number_(query_number),
-    query_counter_(0),
-    occupied_blocks_(query_number, nullptr),
-    free_blocks_(query_number, memoryBlocksComparator),
-    head_(new MemoryBlock(0, 0, -1)) {
+    request_total_number_(request_total_number),
+    request_counter_(0),
+    occupied_blocks_(request_total_number, nullptr),
+    free_blocks_(request_total_number, memoryBlocksComparator) {
 
-    MemoryBlock *free_block = createNewFreeBlock(memory_cells_number, 0);
-    connectBlocks(head_, free_block);
+    createNewFreeBlock(memory_cells_number, 0);
 }
 
 MemoryManager::~MemoryManager() {
-    for (unsigned int idx = 0; idx < query_number_; ++idx) {
+    for (unsigned int idx = 0; idx < request_total_number_; ++idx) {
         if (occupied_blocks_[idx] != nullptr) {
             delete occupied_blocks_[idx];
             occupied_blocks_[idx] = nullptr;
@@ -318,22 +324,16 @@ MemoryManager::~MemoryManager() {
             delete free_block;
         }
     }
-    delete head_;
 }
 
-void MemoryManager::releaseOccupiedBlock(unsigned int query_number) {
-    assert(query_number < query_number_);
-    MemoryBlock *ptr = occupied_blocks_[query_number];
+void MemoryManager::releaseOccupiedBlock(unsigned int request_number) {
+    MemoryBlock *ptr = occupied_blocks_[request_number];
     delete ptr;
-    occupied_blocks_[query_number] = nullptr;
-}
-
-void MemoryManager::setOccupiedBlock(MemoryBlock *biggest_block) {
-    occupied_blocks_[query_counter_] = biggest_block;
+    occupied_blocks_[request_number] = nullptr;
 }
 
 void MemoryManager::releaseFreeBlock(MemoryBlock **block_pointer) {
-    free_blocks_.removeElementByIndex((*block_pointer)->free_heap_index);
+    free_blocks_.removeElementByIndex((*block_pointer)->getFreeHeapIndex());
     delete *block_pointer;
     *block_pointer = nullptr;
 }
@@ -346,56 +346,45 @@ MemoryBlock *MemoryManager::createNewFreeBlock(unsigned int size, unsigned int p
 }
 
 MemoryBlock *MemoryManager::createNewOccupiedBlock(unsigned int size, unsigned int position) {
-    MemoryBlock *new_block = new MemoryBlock(size, position, -1);
-    occupied_blocks_[query_counter_] = new_block;
+    MemoryBlock *new_block = new MemoryBlock(size, position, MemoryBlock::OCCUPIED_BLOCK);
+    occupied_blocks_[request_counter_] = new_block;
     return new_block;
 }
 
-void MemoryManager::setFreeBlockOccupied(MemoryBlock *free_block) {
-    free_blocks_.removeElementByIndex(free_block->free_heap_index);
-    free_block->free_heap_index = -1;
-
-    setOccupiedBlock(free_block);
-}
-
-void MemoryManager::setOccupiedBlockFree(MemoryBlock *occupied_block, unsigned int query_number) {
-    occupied_block->free_heap_index = free_blocks_.getSize();
-    free_blocks_.insert(occupied_block);
-    occupied_blocks_[query_number] = nullptr;
-}
-
-/*
-void MemoryManager::Block(MemoryBlock *block_pointer) {
-    occupied_blocks_[query_number_] = nullptr;
-}
-*/
 long long MemoryManager::allocate(unsigned int block_size) {
     long long position = -1;
     MemoryBlock *biggest_block = free_blocks_.getSize() > 0 ? free_blocks_.getTop() : nullptr;
 
-    if (!biggest_block || biggest_block->size < block_size) {
-        setOccupiedBlock(nullptr);
+    if (!biggest_block || biggest_block->getSize() < block_size) {
+        occupied_blocks_[request_counter_] = nullptr;
 
-    } else if (biggest_block->size == block_size) {
-        position = biggest_block->position;
+    } else if (biggest_block->getSize() == block_size) {
+        position = biggest_block->getPosition();
         // ... |         free        | ...
         //                ||     
         //                \/    
-        // ... |         occ         | ...     occ for occupied here
-        MemoryBlock *biggest_block = free_blocks_.getTop();
-        setFreeBlockOccupied(biggest_block);
-    } else if (biggest_block->size > block_size) {
-        position = biggest_block->position;
+        // ... |       occupied      | ... 
+        MemoryBlock *new_occupied_block = createNewOccupiedBlock(biggest_block->getSize(),
+                                                                 biggest_block->getPosition());
+
+        connectBlocks(biggest_block->getPreviousBlock(), new_occupied_block);
+        connectBlocks(new_occupied_block, biggest_block->getNextBlock());
+
+        releaseFreeBlock(&biggest_block);
+
+    } else if (biggest_block->getSize() > block_size) {
+        position = biggest_block->getPosition();
         // ... |         free        | ...
         //                 ||     
         //                 \/    
-        // ... | occ  |      free    | ...
-        MemoryBlock *left_block_to_connect = biggest_block->p_prev;
-        MemoryBlock *right_block_to_connect = biggest_block->p_next;
+        // ... | occupied  |  free   | ...
+        MemoryBlock *left_block_to_connect = biggest_block->getPreviousBlock();
+        MemoryBlock *right_block_to_connect = biggest_block->getNextBlock();
 
-        MemoryBlock *new_occupied_block = createNewOccupiedBlock(block_size, biggest_block->position);
-        MemoryBlock *new_free_block = createNewFreeBlock(biggest_block->size - block_size, 
-                                                     biggest_block->position + block_size);
+        MemoryBlock *new_occupied_block = createNewOccupiedBlock(block_size, 
+                                                                 biggest_block->getPosition());
+        MemoryBlock *new_free_block = createNewFreeBlock(biggest_block->getSize() - block_size, 
+                                                         biggest_block->getPosition() + block_size);
 
         connectBlocks(left_block_to_connect, new_occupied_block);
         connectBlocks(new_occupied_block, new_free_block);
@@ -404,116 +393,97 @@ long long MemoryManager::allocate(unsigned int block_size) {
         releaseFreeBlock(&biggest_block);
     }
 
-    ++query_counter_;
+    ++request_counter_;
     return position;
 }
 
-void MemoryManager::deallocate(unsigned int query_number) {
-    MemoryBlock *occupied = occupied_blocks_[query_number]; // occ -- occupied block to free
+void MemoryManager::deallocate(unsigned int request_number) {
+    MemoryBlock *occupied = occupied_blocks_[request_number];
     if (!occupied) {
-        ++query_counter_;
+        ++request_counter_;
         return;
     }
-    if (isOccupied(occupied->p_prev) && isOccupied(occupied->p_next)) {
-        // ... | occ  |  occ | occ | ...
-        //               ||     
-        //               \/    
-        // ... | occ  | free | occ | ...
-        MemoryBlock *block = occupied_blocks_[query_number];
-        setOccupiedBlockFree(block, query_number);
-    } else if (!isOccupied(occupied->p_prev) && isOccupied(occupied->p_next)) {
-        // ... | free |  occ | occ | ...
-        //               ||     
-        //               \/    
-        // ... |   free      | occ | ...
-        MemoryBlock *free_left = occupied->p_prev;
-        MemoryBlock *new_free_block = createNewFreeBlock(free_left->size + occupied->size, 
-                                                     free_left->position);
+    if (isOccupied(occupied->getPreviousBlock()) && isOccupied(occupied->getNextBlock())) {
+        // ... | occupied  |  occupied | occupied | ...
+        //                       ||     
+        //                       \/    
+        // ... | occupied  |    free   | occupied | ...
+        MemoryBlock *occupied_block = occupied_blocks_[request_number];
 
-        connectBlocks(free_left->p_prev, new_free_block);
-        connectBlocks(new_free_block, occupied->p_next);
+        MemoryBlock *new_free_block = createNewFreeBlock(occupied->getSize(), 
+                                                         occupied->getPosition());
+        
+        connectBlocks(occupied_block->getPreviousBlock(), new_free_block);
+        connectBlocks(new_free_block, occupied_block->getNextBlock());
+        releaseOccupiedBlock(request_number);
 
-//        std::cout << "BEFORE RELEASE \n";
-//        free_blocks_.debugPrint();
-//        std::cout << "BLOCK \n";
-//        free_left->debugPrint();
+    } else if (!isOccupied(occupied->getPreviousBlock()) && isOccupied(occupied->getNextBlock())) {
+        // ... | free |  occupied | occupied | ...
+        //                  ||     
+        //                  \/    
+        // ... |       free       | occupied | ...
+        MemoryBlock *free_left = occupied->getPreviousBlock();
+        MemoryBlock *new_free_block = createNewFreeBlock(free_left->getSize() 
+                                                         + occupied->getSize(), 
+                                                         free_left->getPosition());
+
+        connectBlocks(free_left->getPreviousBlock(), new_free_block);
+        connectBlocks(new_free_block, occupied->getNextBlock());
+
         releaseFreeBlock(&free_left);
+        releaseOccupiedBlock(request_number);
+    } else if (isOccupied(occupied->getPreviousBlock()) && !isOccupied(occupied->getNextBlock())) {
+        // ... | occupied  |  occupied | free | ...
+        //                    ||     
+        //                    \/    
+        // ... | occupied  |       free       | ...
+        MemoryBlock *free_right = occupied->getNextBlock();
+        MemoryBlock *new_free_block = createNewFreeBlock(free_right->getSize() 
+                                                         + occupied->getSize(), 
+                                                         occupied->getPosition());
 
-        releaseOccupiedBlock(query_number);
-    } else if (isOccupied(occupied->p_prev) && !isOccupied(occupied->p_next)) {
-        // ... | occ  |  occ | free | ...
-        //               ||     
-        //               \/    
-        // ... | occ  |    free     | ...
-        MemoryBlock *free_right = occupied->p_next;
-        MemoryBlock *new_free_block = createNewFreeBlock(free_right->size + occupied->size, 
-                                                     occupied->position);
-
-        connectBlocks(occupied->p_prev, new_free_block);
-        connectBlocks(new_free_block, occupied->p_next->p_next);
+        connectBlocks(occupied->getPreviousBlock(), new_free_block);
+        connectBlocks(new_free_block, occupied->getNextBlock()->getNextBlock());
 
         releaseFreeBlock(&free_right);
-        releaseOccupiedBlock(query_number);
+        releaseOccupiedBlock(request_number);
     } else {
-        // ... | free  |  occ | free | ...
-        //                 ||     
-        //                 \/    
-        // ... |         free        | ...
-        MemoryBlock *free_left = occupied->p_prev;
-        MemoryBlock *free_right = occupied->p_next;
+        // ... | free  |  occupied | free | ...
+        //                   ||     
+        //                   \/    
+        // ... |            free          | ...
+        MemoryBlock *free_left = occupied->getPreviousBlock();
+        MemoryBlock *free_right = occupied->getNextBlock();
 
-        MemoryBlock *new_free_block = createNewFreeBlock(free_left->size 
-                                                        + occupied->size 
-                                                        + free_right->size,
-                                                        free_left->position);
+        MemoryBlock *new_free_block = createNewFreeBlock(free_left->getSize() 
+                                                        + occupied->getSize() 
+                                                        + free_right->getSize(),
+                                                        free_left->getPosition());
 
-        connectBlocks(free_left->p_prev, new_free_block); 
-        connectBlocks(new_free_block, free_right->p_next);
+        connectBlocks(free_left->getPreviousBlock(), new_free_block); 
+        connectBlocks(new_free_block, free_right->getNextBlock());
         
         releaseFreeBlock(&free_left);
-        releaseFreeBlock(&free_right);
-        
-        releaseOccupiedBlock(query_number);
+        releaseFreeBlock(&free_right);        
+        releaseOccupiedBlock(request_number);
     }
-    ++query_counter_;
+    ++request_counter_;
 }
 
-void MemoryManager::connectBlocks(MemoryBlock *one, MemoryBlock *other) {
-    if (one) {
-        one->p_next = other;
+void MemoryManager::connectBlocks(MemoryBlock *previous, MemoryBlock *next) {
+    if (previous) {
+        previous->setNextBlock(next);
     }
-    if (other) {
-        other->p_prev = one;
+    if (next) {
+        next->setPreviousBlock(previous);
     }
 }
 
 bool MemoryManager::isOccupied(const MemoryBlock *ptr) const {
     if (ptr) {
-        return ptr->free_heap_index == -1;
+        return ptr->getFreeHeapIndex() == MemoryBlock::OCCUPIED_BLOCK;
     } else {
         return true;
     }
 }
 
-void MemoryManager::debugPrint() const {
-    std::cout << "MEMORY MANAGER \n";
-    MemoryBlock *ptr = head_->p_next;
-    while (ptr) {
-        ptr->debugPrint();
-        std::cout << ' ';
-        ptr = ptr->p_next;
-    }
-    std::cout << std::endl;
-    std::cout << "HEAP \n";
-    free_blocks_.debugPrint();
-    std::cout << std::endl;
-    std::cout << "LIST \n";
-    for (auto ptr : occupied_blocks_) {
-        if (ptr) {
-            ptr->debugPrint();
-        } else {
-            std::cout << "null ";
-        }
-    }
-    std::cout << std::endl << std::endl; 
-}
