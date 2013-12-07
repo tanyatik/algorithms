@@ -5,15 +5,15 @@
 #include "../hash_set.hpp"
 
 TEST(hash_table, universal_hash_function) {
-    HashFunction f = pickupUniversalHashFunction(2000000011, 100000);
-    HashFunction g = pickupUniversalHashFunction(2000000011, 100000);
+    UniversalHashFunctor f = generateUniversalHashFunctor(2000000011);
+    UniversalHashFunctor g = generateUniversalHashFunctor(2000000011);
 
     int k = 12345;
     ASSERT_TRUE(f(k) != g(k));
 }
 
 TEST(hash_set, initialization) {
-    HashSet f;
+    FixedSet f;
 
     std::vector<int> keys {1, 2, 4, 5, 7, 11, 28};
     f.initialize(keys);
@@ -32,7 +32,7 @@ TEST(hash_set, initialization) {
 }
 
 TEST(hash_set, initialization_big) {
-    HashSet f;
+    FixedSet f;
 
     static std::default_random_engine g_random_engine;
     std::unordered_set<int> set;
@@ -49,7 +49,3 @@ TEST(hash_set, initialization_big) {
     }
 }
 
-GTEST_API_ int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

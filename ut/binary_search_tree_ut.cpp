@@ -84,3 +84,4 @@ TEST(binary_search_tree, inorder_postorder) {
     std::vector<int> inorder = tree.outputInorder();
     testVector({2, 4, 4, 10, 10}, inorder);
 }
+
