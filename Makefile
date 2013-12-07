@@ -29,7 +29,6 @@ CXXFLAGS += -g -Wall -Wextra --std=c++0x -O0 -pthread
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-TESTS = hash_set_ut binary_heap_ut binary_search_tree_ut
 
 # All Google Test headers.  Usually you shouldn't change this
 # definition.
@@ -38,11 +37,15 @@ GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
 
 # House-keeping build targets.
 
-all : $(TESTS)
+BINARY = test_bin
+TESTS = binary_heap_ut memory_manager_ut hash_set_ut binary_search_tree_ut 
+TEST_DIRECTORY = ut/
+
+all : $(BINARY)
 
 clean :
-	rm -f $(TESTS) gtest.a gtest_main.a *.o
-
+	rm -f $(BINARY) gtest.a gtest_main.a ut/*.o *.d
+#
 # Builds gtest.a and gtest_main.a.
 
 # Usually you shouldn't tweak such internal variables, indicated by a
@@ -70,24 +73,20 @@ gtest_main.a : gtest-all.o gtest_main.o
 # Builds a sample test.  A test should link with either gtest.a or
 # gtest_main.a, depending on whether it defines its own main()
 # function.
+SOURCES_TESTS := $(addsuffix .cpp, $(TESTS))
+SOURCES_TESTS := $(addprefix $(USER_DIR)/$(TEST_DIRECTORY), $(SOURCES_TESTS))
+OBJECTS_TESTS := $(SOURCES_TESTS:.cpp=.o)
 
-hash_set_ut.o : $(USER_DIR)/ut/hash_set_ut.cpp \
-                     $(USER_DIR)/hash_set.hpp $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/ut/hash_set_ut.cpp
+%.o : $(TEST_DIRECTORY)%.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $^
 
-hash_set_ut : hash_set_ut.o gtest_main.a
+$(BINARY) : $(OBJECTS_TESTS) gtest_main.a
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 
-binary_heap_ut.o : $(USER_DIR)/ut/binary_heap_ut.cpp \
-                     $(USER_DIR)/binary_heap.hpp $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/ut/binary_heap_ut.cpp
+DEPS = $(notdir $(SOURCES_TESTS:.cpp=.d))
 
-binary_heap_ut : binary_heap_ut.o gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
+include $(DEPS)
 
-binary_search_tree_ut.o : $(USER_DIR)/ut/binary_search_tree_ut.cpp \
-                     $(USER_DIR)/binary_search_tree.hpp $(GTEST_HEADERS)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $(USER_DIR)/ut/binary_search_tree_ut.cpp
+%.d : $(TEST_DIRECTORY)%.cpp
+	$(CC) $(CPPFLAGS) $(CXXFLAGS) -MF"$@" -MG -MM -MP -MT"$@" -MT"$(<:.cpp=.o)" "$<"
 
-binary_search_tree_ut : binary_search_tree_ut.o gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
