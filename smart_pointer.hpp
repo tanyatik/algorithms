@@ -6,6 +6,7 @@ template <class TPointer>
 class ReferenceCounter {
 private:
     unsigned int *counter_;
+
 public:
     ReferenceCounter() :
         counter_(new unsigned int(1)) {}
@@ -15,17 +16,15 @@ public:
 
     TPointer clone(const TPointer &object) {
         ++(*counter_);
-        std::cout << "refcounter = " << *counter_ << std::endl;
         return object;
     }
 
     bool release(const TPointer &) {
         if (!--(*counter_)) {
             delete counter_;
-            std::cout << "refcounter = 0\n";
-            return true;
+            counter_ = nullptr;
+            return true; 
         }
-        std::cout << "refcounter = " << *counter_ << std::endl;
         return false;
     }
 protected:
@@ -34,20 +33,17 @@ protected:
 
 template<typename TObject>
 class SimpleStorage {
-
 public:
     typedef TObject *TStored;
     typedef TObject *TPointer;
     typedef TObject &TReference;
 
-protected:
     SimpleStorage() :
         pointed_object_(getDefaultValue()) {}
 
     SimpleStorage(const TStored &pointer) :
         pointed_object_(pointer) {}
-
-    friend  inline TPointer get(const SimpleStorage &storage) {
+    friend inline TPointer get(const SimpleStorage &storage) {
         return storage.pointed_object_;
     }
     friend inline const TStored &getReference(const SimpleStorage &storage) {
@@ -56,7 +52,7 @@ protected:
     friend inline const TStored &getReference(SimpleStorage &storage) {
         return storage.pointed_object_;
     }
-
+protected:
     TPointer operator ->() const {
         return pointed_object_;
     }
@@ -65,7 +61,6 @@ protected:
         return pointed_object_;
     }
 
-protected:
     static TStored getDefaultValue() {
         return nullptr;
     }
@@ -77,7 +72,6 @@ protected:
 
 template<typename TObject>
 class ArrayStorage : public SimpleStorage<TObject> {
-
 public:
 
     ArrayStorage(const typename SimpleStorage<TObject>::TStored &pointer) :
@@ -106,29 +100,36 @@ template<typename TObject,
          template<class> class TStoragePolicy = DefaultStorage,
          template<class> class TOwnershipPolicy = ReferenceCounter>
 class SmartPointer : public TOwnershipPolicy<typename TStoragePolicy<TObject>::TPointer>,
-                            TStoragePolicy<TObject> {
+                     public TStoragePolicy<TObject> {
 private:
 
     typedef TStoragePolicy<TObject> TStorage;
     typedef TOwnershipPolicy<typename TStorage::TPointer> TOwnership;
     
+    class BoolChecker {
+        void operator delete(void *);
+    };
 public:
     explicit SmartPointer(typename TStorage::TPointer pointed_object_) :
         TOwnership(),
         TStorage(pointed_object_) {
-        std::cout << "SmartPointer dtor\n";              
     }
 
     SmartPointer (const SmartPointer &other) :
           TOwnership(other), 
           TStorage(TOwnership::clone(getReference(other))) {
-        std::cout << "SmartPointer copy\n";          
     }
 
-    SmartPointer &operator= (const SmartPointer &other) {
+    SmartPointer &operator= (SmartPointer &other) {
+        bool unique = TOwnership::release(getReference(*this));
+        if (unique) {
+            TStorage::destroy();
+        }
+
         TOwnership::operator =(other);
-        TStorage::operator =(TOwnership::clone(getReference(other)));
-        std::cout << "SmartPointer =\n";          
+        TStorage::operator = (other.TOwnership::clone(getReference(other)));
+
+        return *this;
     }
 
     ~SmartPointer() {
@@ -136,15 +137,22 @@ public:
         if (unique) {
             TStorage::destroy();
         }
-        std::cout << "SmartPointer dtor\n";          
     }
 
     typename TStorage::TReference operator *() const {
         return TStorage::operator *();
     }
 
-    typename TStorage::TReference operator ->() const {
+    typename TStorage::TPointer operator ->() const {
         return TStorage::operator->();
+    }
+
+    operator BoolChecker *() const {
+        if (get(*this) == nullptr) {
+            return nullptr;
+        }
+        static BoolChecker checker;
+        return &checker;
     }
 private:
     template<typename TAnyPointer>
