@@ -25,4 +25,10 @@ TEST(smart_pointer, default_smart_pointer) {
     SmartPointer<SimpleClass> s1(new SimpleClass(5));
     SmartPointer<SimpleClass> s2(s1);
     SmartPointer<SimpleClass> s3 = s2;
+    //delete s1;
+
+    using tanyatik::ArrayStorage;
+    typedef SmartPointer<int, ArrayStorage> ArrayPointer; 
+    ArrayPointer arr1(new int[1024]);
+    ArrayPointer arr2 = arr1;
 }

@@ -28,30 +28,32 @@ public:
         std::cout << "refcounter = " << *counter_ << std::endl;
         return false;
     }
+protected:
+    ~ReferenceCounter() {}
 };
 
 template<typename TObject>
-class DefaultStorage {
+class SimpleStorage {
 
 public:
     typedef TObject *TStored;
     typedef TObject *TPointer;
     typedef TObject &TReference;
 
-public:
-    DefaultStorage() :
+protected:
+    SimpleStorage() :
         pointed_object_(getDefaultValue()) {}
 
-    DefaultStorage(const TStored &pointer) :
+    SimpleStorage(const TStored &pointer) :
         pointed_object_(pointer) {}
 
-    friend  inline TPointer get(const DefaultStorage &storage) {
+    friend  inline TPointer get(const SimpleStorage &storage) {
         return storage.pointed_object_;
     }
-    friend inline const TStored &getReference(const DefaultStorage &storage) {
+    friend inline const TStored &getReference(const SimpleStorage &storage) {
         return storage.pointed_object_;
     }
-    friend inline const TStored &getReference(DefaultStorage &storage) {
+    friend inline const TStored &getReference(SimpleStorage &storage) {
         return storage.pointed_object_;
     }
 
@@ -64,20 +66,45 @@ public:
     }
 
 protected:
-    void destroy() {
-        delete pointed_object_;
-    }
     static TStored getDefaultValue() {
         return nullptr;
     }
 
-private:
+    ~SimpleStorage() {}
+
     TStored pointed_object_;
 };
 
+template<typename TObject>
+class ArrayStorage : public SimpleStorage<TObject> {
+
+public:
+
+    ArrayStorage(const typename SimpleStorage<TObject>::TStored &pointer) :
+        SimpleStorage<TObject>(pointer) {}
+
+protected:
+    void destroy() {
+        delete [] SimpleStorage<TObject>::pointed_object_;
+    }
+};
+
+template<typename TObject>
+class DefaultStorage : public SimpleStorage<TObject> {
+
+public:
+    DefaultStorage(const typename SimpleStorage<TObject>::TStored &pointer) :
+        SimpleStorage<TObject>(pointer) {}
+
+protected:
+    void destroy() {
+        delete SimpleStorage<TObject>::pointed_object_;
+    }
+};
+
 template<typename TObject, 
-         template<class> class TOwnershipPolicy = ReferenceCounter,
-         template<class> class TStoragePolicy = DefaultStorage>
+         template<class> class TStoragePolicy = DefaultStorage,
+         template<class> class TOwnershipPolicy = ReferenceCounter>
 class SmartPointer : public TOwnershipPolicy<typename TStoragePolicy<TObject>::TPointer>,
                             TStoragePolicy<TObject> {
 private:
@@ -99,8 +126,7 @@ public:
     }
 
     SmartPointer &operator= (const SmartPointer &other) {
-        TOwnership::operator =
-            (getImlementation(other));
+        TOwnership::operator =(other);
         TStorage::operator =(TOwnership::clone(getReference(other)));
         std::cout << "SmartPointer =\n";          
     }
@@ -120,6 +146,12 @@ public:
     typename TStorage::TReference operator ->() const {
         return TStorage::operator->();
     }
+private:
+    template<typename TAnyPointer>
+    TAnyPointer operator &();
+
+    template<typename TAnyPointer>
+    operator TAnyPointer *();
 }; 
 
 
