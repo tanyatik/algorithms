@@ -154,12 +154,44 @@ public:
         static BoolChecker checker;
         return &checker;
     }
-private:
-    template<typename TAnyPointer>
-    TAnyPointer operator &();
 
-    template<typename TAnyPointer>
-    operator TAnyPointer *();
+    bool operator!() const {
+        return get(*this) == nullptr;
+    }
+
+    inline friend bool operator == (const SmartPointer &lhs, const TObject *rhs) {
+        return get(lhs) == rhs;
+    }
+
+    inline friend bool operator == (const TObject *lhs, const SmartPointer &rhs) {
+        return lhs == get(rhs);
+    }
+
+    inline friend bool operator == (const SmartPointer &lhs, const SmartPointer &rhs) {
+        return get(lhs) == get(rhs);
+    }
+
+    template<typename TOtherObject>
+    bool operator ==(const SmartPointer<TOtherObject> &other) const {
+        return get(*this) == get(other);
+    }
+
+    inline friend bool operator != (const SmartPointer &lhs, const TObject *rhs) {
+        return get(lhs) != rhs;
+    }
+
+    inline friend bool operator != (const TObject *lhs, const SmartPointer &rhs) {
+        return lhs != get(rhs);
+    }
+
+    inline friend bool operator != (const SmartPointer &lhs, const SmartPointer &rhs) {
+        return get(lhs) != get(rhs);
+    }
+
+    template<typename TOtherObject>
+    bool operator !=(const SmartPointer<TOtherObject> &other) const {
+        return get(*this) != get(other);
+    }
 }; 
 
 
