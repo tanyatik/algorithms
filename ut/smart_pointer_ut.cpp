@@ -36,15 +36,15 @@ using tanyatik::SmartPointer;
 TEST(smart_pointer, copy_assign) {
     int counter = 0;
     {
-        SmartPointer<SimpleClass> s1(new SimpleClass(1, &counter));
-        ASSERT_EQ(1, s1->getValue());
-        SmartPointer<SimpleClass> s2(s1);
-        ASSERT_EQ(1, s2->getValue());
-        SmartPointer<SimpleClass> s3(s1);
-        ASSERT_EQ(1, s3->getValue());
-        SmartPointer<SimpleClass> s4(s1);
+        SmartPointer<SimpleClass> s_first(new SimpleClass(1, &counter));
+        ASSERT_EQ(1, s_first->getValue());
+        SmartPointer<SimpleClass> s_second(s_first);
+        ASSERT_EQ(1, s_second->getValue());
+        SmartPointer<SimpleClass> s_third(s_first);
+        ASSERT_EQ(1, s_third->getValue());
+        SmartPointer<SimpleClass> s4(s_first);
         ASSERT_EQ(1, s4->getValue());
-        //delete s1;
+        //delete s_first;
     }
     ASSERT_EQ(0, counter);
 }
@@ -74,29 +74,30 @@ TEST(smart_pointer, comparisons)
 {
     int counter = 0;
     {
-        SmartPointer<SimpleClass> s1 (new SimpleClass(1, &counter));
-        ASSERT_EQ(1, s1->getValue());
+        SmartPointer<SimpleClass> s_first (new SimpleClass(1, &counter));
+        ASSERT_EQ(1, s_first->getValue());
 
-        SmartPointer<SimpleClass> s2(s1);
-        ASSERT_TRUE(s1 == s2);
+        SmartPointer<SimpleClass> s_second(s_first);
+        ASSERT_TRUE(s_first == s_second);
 
-        SmartPointer<SimpleClass> s3 = s2;
-        ASSERT_TRUE(s1 == s3);
-        ASSERT_TRUE(s2 == s3);
-        ASSERT_TRUE(s1 == s2);
+        SmartPointer<SimpleClass> s_third = s_second;
+        ASSERT_TRUE(s_first == s_third);
+        ASSERT_TRUE(s_second == s_third);
+        ASSERT_TRUE(s_first == s_second);
 
-        SimpleClass *raw_first = get(s1);
-        ASSERT_TRUE(s1 == raw_first);
-        ASSERT_TRUE(raw_first == s1);
+        SimpleClass *raw_first = get(s_first);
+        ASSERT_TRUE(s_first == raw_first);
+        ASSERT_TRUE(raw_first == s_first);
 
-        SimpleClass *raw_second = get(s2);
-        ASSERT_TRUE(s1 == raw_second);
-        ASSERT_TRUE(raw_second == s1);
+        SimpleClass *raw_second = get(s_second);
+        ASSERT_TRUE(s_first == raw_second);
+        ASSERT_TRUE(raw_second == s_first);
 
-        ASSERT_TRUE(s1);
-        ASSERT_TRUE(s2);
+        ASSERT_TRUE(s_first);
+        ASSERT_TRUE(s_second);
 
-        //s1 = s1;
+        s_first = s_first;
+        ASSERT_TRUE(s_first);
     }
     ASSERT_EQ(0, counter);
 }
@@ -124,11 +125,19 @@ TEST(smart_pointer, null_pointer)
         SimpleDerived *raw_derived_null = 0;
         ASSERT_TRUE(n == raw_derived_null);
         ASSERT_TRUE(raw_derived_null != s_derived);
+        SimpleDerived *raw_derived = get(s_derived);
 
         ASSERT_TRUE(s_base != s_derived);
         ASSERT_TRUE(s_derived != s_base);
         ASSERT_FALSE(s_base == s_derived); 
         ASSERT_FALSE(s_derived == s_base); 
+        ASSERT_TRUE(raw_derived == s_derived);
+        ASSERT_FALSE(raw_derived == s_base);
+
+        SimpleClass *raw_base = get(s_base);
+        ASSERT_FALSE(s_derived == raw_base); 
+
+        ASSERT_FALSE(raw_derived < s_derived);
     }
     ASSERT_EQ(0, counter);
 }
@@ -137,11 +146,11 @@ TEST(smart_pointer, get)
 {
     int counter = 0;
     {
-        SmartPointer<SimpleClass> s1(new SimpleClass(100, &counter));
-        SimpleClass *pointer = get(s1);
+        SmartPointer<SimpleClass> s_first(new SimpleClass(100, &counter));
+        SimpleClass *pointer = get(s_first);
         pointer->setValue(3);
-        ASSERT_EQ(3, s1->getValue());
-        ASSERT_EQ(3, get(s1)->getValue());
+        ASSERT_EQ(3, s_first->getValue());
+        ASSERT_EQ(3, get(s_first)->getValue());
     }
     ASSERT_EQ(0, counter);
 }
@@ -150,9 +159,31 @@ TEST(smart_pointer, array_pointer)
 {
     using tanyatik::ArrayStorage;
     typedef SmartPointer<int, ArrayStorage> ArrayPointer; 
-    ArrayPointer arr1(new int[1024]);
-    ArrayPointer arr2 = arr1;
-    ArrayPointer arr3(new int[2048]);
-    arr3 = arr1;
-    arr2 = arr1;
+    ArrayPointer arr_first(new int[1024]);
+    ArrayPointer arr_second = arr_first;
+    ArrayPointer arr_third(new int[2048]);
+    arr_third = arr_first;
+    arr_second = arr_first;
+}
+
+TEST(smart_pointer, weak_pointer)
+{
+    using tanyatik::WeakPointer;
+    
+    int counter = 0;
+    {
+        WeakPointer<SimpleClass> w_first;
+        {
+            SmartPointer<SimpleClass> s_first(new SimpleClass(1, &counter));
+            w_first = s_first;
+        }
+        ASSERT_TRUE(w_first.expired());
+        SmartPointer<SimpleClass> emptySmart = w_first.lock();
+        ASSERT_TRUE(emptySmart == 0);
+
+        SmartPointer<SimpleClass> sharedPointer(new SimpleClass(2, &counter));
+        WeakPointer<SimpleClass> w_second;
+        SmartPointer<SimpleClass> shared = w_second.lock();
+    }
+    ASSERT_EQ(0, counter);
 }
