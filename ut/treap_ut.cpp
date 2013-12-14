@@ -65,3 +65,56 @@ TEST(treap, insert_stress) {
         ASSERT_TRUE(checkTreap(test));
     }
 }
+
+TEST(treap, erase) {
+    TestTreap test;
+    ASSERT_TRUE(test.insert(5));
+    ASSERT_TRUE(checkTreap(test));
+    ASSERT_TRUE(test.insert(3));
+    ASSERT_TRUE(checkTreap(test));
+    ASSERT_TRUE(test.insert(19234));
+    ASSERT_TRUE(checkTreap(test));
+
+    ASSERT_TRUE(test.erase(19234));
+    ASSERT_TRUE(checkTreap(test));
+    ASSERT_TRUE(test.erase(3));
+    ASSERT_TRUE(checkTreap(test));
+    ASSERT_TRUE(test.erase(5));
+    ASSERT_TRUE(checkTreap(test));
+
+    ASSERT_FALSE(test.erase(19234));
+    ASSERT_TRUE(checkTreap(test));
+    ASSERT_FALSE(test.erase(5));
+    ASSERT_TRUE(checkTreap(test));
+    ASSERT_FALSE(test.erase(3));
+    ASSERT_TRUE(checkTreap(test));
+}
+
+TEST(treap, erase_stress) {
+    TestTreap test;
+
+    static std::default_random_engine g_random_engine;
+    std::unordered_set<int> set;
+    for (int i = 0; i < 100; ++i) {
+        int min = 0;
+        int max = std::numeric_limits<int>::max();
+
+        int element = std::uniform_int_distribution<int>(min, max) (g_random_engine);
+        set.insert(element);
+    }
+
+    for (auto set_element : set) {
+        ASSERT_TRUE(test.insert(set_element));
+        ASSERT_TRUE(checkTreap(test));
+    }
+
+    for (auto set_element : set) {
+        ASSERT_TRUE(test.erase(set_element));
+        ASSERT_TRUE(checkTreap(test));
+    }
+
+    for (auto set_element : set) {
+        ASSERT_FALSE(test.erase(set_element));
+        ASSERT_TRUE(checkTreap(test));
+    }
+}

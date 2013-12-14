@@ -26,7 +26,9 @@ private:
     TreapNodePointer merge(TreapNodePointer left, TreapNodePointer right);
     
     void insert(TreapNodePointer *node, TreapNodePointer new_element);
-    bool find(TreapNodePointer node, const TKey &key) const;
+    TreapNodePointer find(TreapNodePointer node, const TKey &key) const;
+    void erase(TreapNodePointer *node, const TKey &key);
+
     TPriority countRandomPriority() const;
 
     TreapNodePointer root_;
@@ -34,7 +36,7 @@ public:
     // return true if insertion is successful and there is no such element in the treap,
     // false otherwise
     bool insert(const TKey &key);
-    void erase(const TKey &key);
+    bool erase(const TKey &key);
 
     bool find(std::function<bool(const TKey&)> comparator, const TKey *result) const;
     bool find(const TKey &key) const;
@@ -46,15 +48,16 @@ public:
 
 template<typename TKey, typename TPriority>
 bool Treap<TKey, TPriority>::find(const TKey &key) const {
-    return find(root_, key);
+    return (find(root_, key) != nullptr);
 }
 
 template<typename TKey, typename TPriority>
-bool Treap<TKey, TPriority>::find(TreapNodePointer node, const TKey &key) const {
+typename Treap<TKey, TPriority>::TreapNodePointer Treap<TKey, TPriority>::find
+        (TreapNodePointer node, const TKey &key) const {
     if (node == nullptr) {
-        return false;
+        return nullptr;
     } else if (node->key_ == key) {
-        return true;
+        return node;
     } else if (node->key_ < key) {
         return find(node->right_, key);
     } else {
@@ -83,7 +86,6 @@ bool Treap<TKey, TPriority>::insert(const TKey &key) {
         split (t->l, key, l, t->l),  r = t;
     else
         split (t->r, key, t->r, r),  l = t;
-
 */
 
 template<typename TKey, typename TPriority>
@@ -102,6 +104,50 @@ void Treap<TKey, TPriority>::split(TreapNodePointer node,
         
         split(node->left_, key, result_left, &node->left_);
         *result_right = node;
+    }
+}
+
+template<typename TKey, typename TPriority>
+typename Treap<TKey, TPriority>::TreapNodePointer Treap<TKey, TPriority>::merge
+        (TreapNodePointer left, TreapNodePointer right) {
+    if (left != nullptr && right == nullptr) {
+        return left;
+
+    } else if (left == nullptr) {
+        return right;
+
+    } else if (left->key_ < right->key_) {
+        right->left_ = merge(left, right->left_);
+        return right;
+
+    } else {
+        left->right_ = merge(right, left->right_);
+        return left;
+
+    }
+}
+
+template<typename TKey, typename TPriority>
+bool Treap<TKey, TPriority>::erase(const TKey &key) {
+    TreapNodePointer node_to_erase = find(root_, key);
+
+    if (node_to_erase == nullptr) {
+        return false;
+    } else {
+        erase(&root_, key);
+        return true;
+    }
+}
+
+
+template<typename TKey, typename TPriority>
+void Treap<TKey, TPriority>::erase(TreapNodePointer *node, const TKey &key) {
+    if ((*node)->key_ == key) {
+        *node = merge((*node)->left_, (*node)->right_);
+    } else if ((*node)->key_ < key) {
+        erase(&(*node)->right_, key);
+    } else {
+        erase(&(*node)->left_, key);
     }
 }
 
