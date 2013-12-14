@@ -1,10 +1,15 @@
 #include <iostream>
 #include <vector>
 
+#include "treap.hpp"
+
 namespace tanyatik {
 
 class Parking {
 private:
+    typedef tanyatik::Treap<int> TFreePlacesTreap;
+    TFreePlacesTreap free_places_;
+
     static const int NO_FREE_PLACE = -1;
     static const int CORRECT_DEPARTURE = 0;
     static const int INCORRECT_DEPARTURE = -2;
@@ -90,6 +95,40 @@ std::vector<int> processParkingEvents(std::vector<ParkingEvent> events, int park
 void writeEventsResult(std::vector<int> results) {
     for (auto result : results) {
         std::cout << result << std::endl;
+    }
+}
+
+Parking::Parking(int places_count) {
+    for (int place_number = 1; place_number <= places_count; ++place_number) {
+        free_places_.insert(place_number);
+    }
+}
+
+int Parking::processArrival(int place_number) {
+    int place = 0;
+    bool place_found = free_places_.find([place_number] (int place) { return place >= place_number; },
+                                         &place);
+    if (!place_found) {
+        // cyclic parking -- try to look in the beginning
+        place_found = free_places_.find([place_number] (int place) { return place >= 1; },
+                                        &place);
+    }
+
+    if (place_found) {
+        free_places_.erase(place);
+        return place;
+    } else {
+        return NO_FREE_PLACE;
+    }
+}
+
+int Parking::processDeparture(int place_number) {
+    bool inserted = free_places_.insert(place_number);
+
+    if (inserted) {
+        return CORRECT_DEPARTURE;
+    } else {
+        return INCORRECT_DEPARTURE;
     }
 }
 
