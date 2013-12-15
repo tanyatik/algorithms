@@ -178,12 +178,12 @@ TEST(smart_pointer, weak_pointer)
             w_first = s_first;
         }
         ASSERT_TRUE(w_first.expired());
-        SmartPointer<SimpleClass> emptySmart = w_first.lock();
-        ASSERT_TRUE(emptySmart == 0);
+        SmartPointer<SimpleClass> s_second = w_first.lock();
+        ASSERT_TRUE(s_second == 0);
 
-        SmartPointer<SimpleClass> sharedPointer(new SimpleClass(2, &counter));
+        SmartPointer<SimpleClass> s_third(new SimpleClass(2, &counter));
         WeakPointer<SimpleClass> w_second;
-        SmartPointer<SimpleClass> shared = w_second.lock();
+        SmartPointer<SimpleClass> s_fourth = w_second.lock();
     }
     ASSERT_EQ(0, counter);
 }
