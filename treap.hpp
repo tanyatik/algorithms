@@ -1,7 +1,7 @@
 #include <functional>
 #include <memory>
 #include <random>
-#include <exception>
+#include <stdexcept>
 
 namespace tanyatik {
 
@@ -27,6 +27,7 @@ private:
     
     void insert(TreapNodePointer *node, TreapNodePointer new_element);
     TreapNodePointer find(TreapNodePointer node, const TKey &key) const;
+    TreapNodePointer findThisOrNext(TreapNodePointer node, const TKey &key) const;
     void erase(TreapNodePointer *node, const TKey &key);
 
     TPriority countRandomPriority() const;
@@ -38,8 +39,8 @@ public:
     bool insert(const TKey &key);
     bool erase(const TKey &key);
 
-    bool find(std::function<bool(const TKey&)> comparator, const TKey *result) const;
     bool find(const TKey &key) const;
+    bool findThisOrNext(const TKey &key, TKey *result) const;
 
     // Throws std::exception if some property of binary search tree is unsatisfied
     void checkStructure() const;
@@ -48,9 +49,21 @@ public:
 
 template<typename TKey, typename TPriority>
 bool Treap<TKey, TPriority>::find(const TKey &key) const {
-    return (find(root_, key) != nullptr);
+    TreapNodePointer found = findThisOrNext(root_, key);
+    return (found != nullptr && found->key_ == key);
 }
 
+template<typename TKey, typename TPriority>
+bool Treap<TKey, TPriority>::findThisOrNext(const TKey &key, TKey *result) const {
+    TreapNodePointer found = findThisOrNext(root_, key);
+    if (found == nullptr) {
+        return false;
+    } else {
+        *result = found->key_;
+        return true;
+    }
+}
+/*
 template<typename TKey, typename TPriority>
 typename Treap<TKey, TPriority>::TreapNodePointer Treap<TKey, TPriority>::find
         (TreapNodePointer node, const TKey &key) const {
@@ -62,6 +75,27 @@ typename Treap<TKey, TPriority>::TreapNodePointer Treap<TKey, TPriority>::find
         return find(node->right_, key);
     } else {
         return find(node->left_, key);
+    }
+}
+*/
+
+template<typename TKey, typename TPriority>
+typename Treap<TKey, TPriority>::TreapNodePointer Treap<TKey, TPriority>::findThisOrNext
+        (TreapNodePointer node, const TKey &key) const {
+    if (node == nullptr) {
+        return nullptr;
+    } else if (node->key_ == key) {
+        return node;
+    } else if (node->key_ < key) {
+        TreapNodePointer right_result = findThisOrNext(node->right_, key);
+        return right_result;
+    } else {
+        TreapNodePointer left_result = findThisOrNext(node->left_, key);
+        if (left_result == nullptr) {
+            return node;
+        } else {
+            return left_result;
+        }
     }
 }
 
@@ -129,9 +163,9 @@ typename Treap<TKey, TPriority>::TreapNodePointer Treap<TKey, TPriority>::merge
 
 template<typename TKey, typename TPriority>
 bool Treap<TKey, TPriority>::erase(const TKey &key) {
-    TreapNodePointer node_to_erase = find(root_, key);
+    TreapNodePointer node_to_erase = findThisOrNext(root_, key);
 
-    if (node_to_erase == nullptr) {
+    if (node_to_erase == nullptr || node_to_erase->key_ != key) {
         return false;
     } else {
         erase(&root_, key);

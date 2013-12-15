@@ -118,3 +118,20 @@ TEST(treap, erase_stress) {
         ASSERT_TRUE(checkTreap(test));
     }
 }
+
+TEST(treap, find_this_or_next) {
+    TestTreap test;
+
+    for (int i = 0; i < 5; ++i) {
+        test.insert(2 * i + 1);
+    }
+
+    int result = 0;
+    for (int i = 0; i < 5; ++i) {
+        test.findThisOrNext(2 * i, &result);
+        ASSERT_EQ(2 * i + 1, result);
+        test.findThisOrNext(2 * i + 1, &result);
+        ASSERT_EQ(2 * i + 1, result);
+    }
+    ASSERT_FALSE(test.findThisOrNext(10, &result));
+}
