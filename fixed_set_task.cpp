@@ -16,6 +16,21 @@ class UniversalHashFunctor {
         unsigned long long prime_;
 };
 
+// Static perfect hash table 
+class PerfectHashTable {
+    public:
+        bool contains(int element) const;
+        void initialize(const std::vector<int> &elements);
+    private:
+        static const int PRIME_NUMBER = 2000000011;
+        // Computes index of an element
+        // by calculating hash function value by modulus elements_.size()
+        int getIndex(int element) const;
+
+        UniversalHashFunctor function_;
+        std::vector<int> elements_;
+};
+
 class FixedSet {
     public:
         void initialize(const std::vector<int>& elements);
@@ -25,21 +40,15 @@ class FixedSet {
         static const int PRIME_NUMBER = 2000000011;
         static const int ADJUST = 1000000000;
 
-        class Bucket {
-            public:
-                bool contains(int element) const;
-                void initialize(const std::vector<int> &elements);
-            private:
-                int getIndex(int element) const;
-
-                UniversalHashFunctor function_;
-                std::vector<int> elements_;
-        };
-
         UniversalHashFunctor function_;
-        std::vector<Bucket> buckets_;
+        std::vector<PerfectHashTable> buckets_;
+
+        // Adds fixed constant ADJUST to every element
+        // (it is needed to be able to keep 'negative' numbers in hash table)
         static int adjustElement(int element);
 
+        // Computes index in buckets_ array of an element
+        // by calculating hash function value by modulus buckets_.size()
         int getIndex(int element) const;
 };
 
@@ -47,7 +56,7 @@ UniversalHashFunctor generateUniversalHashFunctor(int prime);
 
 std::vector<int> readInputVector();
 void outputAnswers(const std::vector<bool> &answers);
-std::vector<bool> processQueries(std::vector<int> numbers, 
+std::vector<bool> processQueries(const std::vector<int>& numbers, 
                                  const std::vector<int>& queries);
 
 int main() {
@@ -95,9 +104,10 @@ UniversalHashFunctor generateUniversalHashFunctor(int prime) {
 }
 
 
-void FixedSet::Bucket::initialize(const std::vector<int>& elements) {
+void PerfectHashTable::initialize(const std::vector<int>& elements) {
     if (elements.size() == 0) {
         return;
+
     } else if (elements.size() == 1) {
         elements_.resize(1);
         elements_[0] = elements[0];
@@ -127,7 +137,7 @@ void FixedSet::Bucket::initialize(const std::vector<int>& elements) {
     }
 }
 
-bool FixedSet::Bucket::contains(int element) const {
+bool PerfectHashTable::contains(int element) const {
     if (elements_.empty()) {
         return false;
     }
@@ -135,7 +145,7 @@ bool FixedSet::Bucket::contains(int element) const {
     return (elements_[index] == element);
 }
 
-int FixedSet::Bucket::getIndex(int element) const {
+int PerfectHashTable::getIndex(int element) const {
     return function_(element) % elements_.size();
 }
 
@@ -183,7 +193,7 @@ std::vector<int> readInputVector() {
     return elements;
 }
 
-std::vector<bool> processQueries(std::vector<int> numbers, 
+std::vector<bool> processQueries(const std::vector<int>& numbers, 
                                  const std::vector<int>& queries) {
     FixedSet set;
     set.initialize(numbers);
