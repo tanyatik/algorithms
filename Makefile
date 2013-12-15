@@ -38,7 +38,7 @@ GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
 # House-keeping build targets.
 
 BINARY = test_bin
-TESTS = binary_heap_ut memory_manager_ut hash_set_ut binary_search_tree_ut 
+TESTS = binary_heap_ut memory_manager_ut hash_set_ut binary_search_tree_ut smart_pointer_ut treap_ut
 TEST_DIRECTORY = ut/
 
 all : $(BINARY)
