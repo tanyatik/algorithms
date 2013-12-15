@@ -67,21 +67,21 @@ const TElement &BinaryHeap<TElement, TComparator, TMoveCallback>::getTop() const
 }
 
 template<typename TElement, typename TComparator, typename TMoveCallback>
-typename BinaryHeap<TElement, TComparator, TMoveCallback>::TIndex BinaryHeap<TElement, TComparator, TMoveCallback>::getParentIndex
-        (TIndex index) {
+typename BinaryHeap<TElement, TComparator, TMoveCallback>::TIndex 
+    BinaryHeap<TElement, TComparator, TMoveCallback>::getParentIndex(TIndex index) {
     if (index <= 0) return -1;
     return (index - 1) >> 1;
 }
 
 template<typename TElement, typename TComparator, typename TMoveCallback>
-typename BinaryHeap<TElement, TComparator, TMoveCallback>::TIndex BinaryHeap<TElement, TComparator, TMoveCallback>::getLeftIndex
-        (TIndex index) {
+typename BinaryHeap<TElement, TComparator, TMoveCallback>::TIndex 
+    BinaryHeap<TElement, TComparator, TMoveCallback>::getLeftIndex(TIndex index) {
     return (index << 1) + 1;
 }
 
 template<typename TElement, typename TComparator, typename TMoveCallback>
-typename BinaryHeap<TElement, TComparator, TMoveCallback>::TIndex BinaryHeap<TElement, TComparator, TMoveCallback>::getRightIndex
-        (TIndex index) {
+typename BinaryHeap<TElement, TComparator, TMoveCallback>::TIndex
+    BinaryHeap<TElement, TComparator, TMoveCallback>::getRightIndex(TIndex index) {
     return (index << 1) + 2;
 }
 
@@ -151,7 +151,8 @@ void BinaryHeap<TElement, TComparator, TMoveCallback>::deleteElement(TIndex inde
 }
 
 template<typename TElement, typename TComparator, typename TMoveCallback>
-typename BinaryHeap<TElement, TComparator, TMoveCallback>::TIndex BinaryHeap<TElement, TComparator, TMoveCallback>::heapifyUp
+typename BinaryHeap<TElement, TComparator, TMoveCallback>::TIndex 
+    BinaryHeap<TElement, TComparator, TMoveCallback>::heapifyUp
             (TIndex index) {
     TIndex parent_index = getParentIndex(index);
 
