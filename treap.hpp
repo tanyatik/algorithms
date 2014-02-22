@@ -63,21 +63,6 @@ bool Treap<TKey, TPriority>::findThisOrNext(const TKey &key, TKey *result) const
         return true;
     }
 }
-/*
-template<typename TKey, typename TPriority>
-typename Treap<TKey, TPriority>::TreapNodePointer Treap<TKey, TPriority>::find
-        (TreapNodePointer node, const TKey &key) const {
-    if (node == nullptr) {
-        return nullptr;
-    } else if (node->key_ == key) {
-        return node;
-    } else if (node->key_ < key) {
-        return find(node->right_, key);
-    } else {
-        return find(node->left_, key);
-    }
-}
-*/
 
 template<typename TKey, typename TPriority>
 typename Treap<TKey, TPriority>::TreapNodePointer Treap<TKey, TPriority>::findThisOrNext
@@ -194,15 +179,6 @@ TPriority Treap<TKey, TPriority>::countRandomPriority() const {
     return std::uniform_int_distribution<TPriority>(0, max_priority) (generator);
 }
 
-/*
-    if (!t)
-        t = it;
-    else if (it->prior > t->prior)
-        split (t, it->key, it->l, it->r),  t = it;
-    else
-        insert (it->key < t->key ? t->l : t->r, it);
-*/
-
 template<typename TKey, typename TPriority>
 void Treap<TKey, TPriority>::insert(TreapNodePointer *node, TreapNodePointer new_element) {
     if (*node == nullptr) {
@@ -235,15 +211,8 @@ void Treap<TKey, TPriority>::checkStructure(TreapNodePointer node) const {
     if (node == nullptr) {
         return;
     } else {
-//        std::cout << std::to_string(node->key_) << 
-//                     " Priority : " << std::to_string(node->priority_) << std::endl;;
-//
-//        std::cout << std::to_string(node->key_) << " Goto left : \n\t";
         checkStructure(node->left_);
-//        std::cout << std::to_string(node->key_) << " return from left\n" << 
-//            std::to_string(node->key_) << "Goto right : \n\t";
         checkStructure(node->right_);
-//        std::cout << std::to_string(node->key_) << " return from right\n";
         
         if (node->left_ && node->left_->key_ >= node->key_) {
             std::string description = std::string("Key of left ") + 
