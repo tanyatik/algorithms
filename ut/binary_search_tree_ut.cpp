@@ -4,6 +4,8 @@
 #include "../binary_search_tree.hpp"
 #include "test_helper.hpp"
 
+namespace tanyatik {
+
 template<>
 struct TraitsSentinel<int> {
     static int getMinSentinel() { return -1000000000; }
@@ -73,3 +75,4 @@ TEST(binary_search_tree, inorder_postorder) {
     testVector({2, 4, 4, 10, 10}, inorder);
 }
 
+} // namespace tanyatik

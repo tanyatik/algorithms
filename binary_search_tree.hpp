@@ -2,6 +2,8 @@
 #include <array>
 #include <stack>
 
+namespace tanyatik {
+
 template<typename TElem>
 struct TraitsSentinel;
 
@@ -328,3 +330,5 @@ void BinarySearchTree<TElem>::debugPrint() const {
     root_->debugPrint();
     std::cout << std::endl;
 }
+
+} //  namespace tanyatik
