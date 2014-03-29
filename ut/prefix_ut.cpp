@@ -1,18 +1,21 @@
 #include <random>
 #include <gtest/gtest.h>
+#include <chrono>
 
 #include "../prefix.hpp"
 #include "test_helper.hpp"
 
 namespace tanyatik {
 
-TEST(prefix, simple) {
+TEST(prefix, prefix) {
     testVector({0, 0, 0, 0, 1, 2, 3}, computePrefix("abcdabc"));
-}
-
-TEST(prefix, complicated) {
     testVector({0, 0, 0, 0, 1, 2, 3, 1, 2, 3, 4, 5, 6, 7, 4, 5, 6}, 
                 computePrefix("abcdabcabcdabcdab"));
+}
+
+TEST(prefix, edge_cases) {
+    testVector({}, computePrefix(""));
+    testVector({0}, computePrefix("a"));
 } 
 
 TEST(z_function, simple) {
@@ -41,58 +44,89 @@ TEST(z_function, time) {
         int letter_index = std::uniform_int_distribution<int>(min, max) (g_random_engine);
         input[i] = alphabet[letter_index];
     }
-    
-    computeZFunction(input);
-}
-
-TEST(pattern_occurences, one_symbol_pattern) {
-    testVector({}, getPatternOccurences("a", "b"));
-    testVector({0}, getPatternOccurences("a", "a"));
-    testVector({0, 1}, getPatternOccurences("a", "aa"));
-    testVector({0, 1, 2}, getPatternOccurences("a", "aaa"));
-    testVector({1}, getPatternOccurences("a", "ba"));
-}
-
-TEST(pattern_occurences, simple_pattern) {
-    testVector({1, 3}, getPatternOccurences("ab", "bababa"));
-}
-
-TEST(pattern_occurences, regular_pattern) {
-    testVector({0, 2}, getPatternOccurences("aba", "ababa"));
-    testVector({5, 14}, getPatternOccurences("ababc", "abracababcdabrababcabra"));
-    testVector({1}, getPatternOccurences("abcab", "babcab"));
-    testVector({2}, getPatternOccurences("abcab", "ababcab"));
-    testVector({7, 15}, getPatternOccurences("abcab", "abracababcabrababcabra"));
-    testVector({0}, getPatternOccurences("aaa", "aaa"));
-    testVector({0, 5, 7}, getPatternOccurences("aba", "ababbababa"));
-}
-
-TEST(pattern_occurences, edge_cases) {
-    testVector({}, getPatternOccurences("abcd", "abc"));
-}
-
-TEST(pattern_occurences, time) {
-    const int test_size = 50000;
-    std::string pattern(test_size * 0.3, 0);
-    std::string text(test_size, 0);
-    
-    std::vector<char> alphabet = {'a', 'b', 'c', 'd', 'e' };
-    static std::default_random_engine g_random_engine;
-
-    int min = 0;
-    int max = alphabet.size() - 1;
-
-    for (size_t i = 0; i < pattern.size(); ++i) {
-        int letter_index = std::uniform_int_distribution<int>(min, max) (g_random_engine);
-        pattern[i] = alphabet[letter_index];
+   
+    {
+        timer_test timer;
+        computeZFunction(input);
     }
-    
-    for (size_t i = 0; i < text.size(); ++i) {
-        int letter_index = std::uniform_int_distribution<int>(min, max) (g_random_engine);
-        text[i] = alphabet[letter_index];
-    }
+}
 
-    getPatternOccurences(pattern, text);
+TEST(pattern_matches, one_symbol_pattern) {
+    testVector({}, getPatternMatches("a", "b"));
+    testVector({0}, getPatternMatches("a", "a"));
+    testVector({0, 1}, getPatternMatches("a", "aa"));
+    testVector({0, 1, 2}, getPatternMatches("a", "aaa"));
+    testVector({1}, getPatternMatches("a", "ba"));
+}
+
+TEST(pattern_matches, simple_pattern) {
+    testVector({1, 3}, getPatternMatches("ab", "bababa"));
+}
+
+TEST(pattern_matches, regular_pattern) {
+    testVector({0, 2}, getPatternMatches("aba", "ababa"));
+    testVector({5, 14}, getPatternMatches("ababc", "abracababcdabrababcabra"));
+    testVector({1}, getPatternMatches("abcab", "babcab"));
+    testVector({1, 4}, getPatternMatches("abcab", "babcabcab"));
+    testVector({2}, getPatternMatches("abcab", "ababcab"));
+    testVector({7, 15}, getPatternMatches("abcab", "abracababcabrababcabra"));
+    testVector({0}, getPatternMatches("aaa", "aaa"));
+    testVector({0, 5, 7}, getPatternMatches("aba", "ababbababa"));
+    testVector({0, 2, 6}, getPatternMatches("aba", "ababacaba"));
+    testVector({2, 5, 8, 11, 18, 23}, getPatternMatches("abcab", "ababcabcabcabcabababcababcab"));
+    testVector({4}, getPatternMatches("abddabaa", "abddabddabaaaba"));
+    testVector({7}, getPatternMatches("babddbabee", "babddbababddbabee"));
+
+    testVector({0}, getPatternMatches("abadabaa", "abadabaaaaaaaa"));
+    testVector({4}, getPatternMatches("abadabaa", "abadabadabaaaa"));
+    testVector({6}, getPatternMatches("abadabaa", "abadababadabaaa"));
+}
+
+TEST(pattern_matches, edge_cases) {
+    testVector({}, getPatternMatches("abcd", "abc"));
+    testVector({0, 1, 2, 3}, getPatternMatches("", "abcd"));
+}
+
+TEST(subpatterns, edge_cases) {
+    testVector({{"", 0}}, getSubpatterns("???????????", '?'));
+    testVector({{"", 0}}, getSubpatterns("?", '?'));
+}
+
+TEST(subpatterns, one_subpattern) {
+    testVector({{"a", 1}}, getSubpatterns("?a", '?'));
+    testVector({{"a", 3}}, getSubpatterns("???a", '?'));
+    testVector({{"a", 0}}, getSubpatterns("a?", '?'));
+    testVector({{"a", 0}}, getSubpatterns("a???", '?'));
+    testVector({{"a", 1}}, getSubpatterns("?a?", '?'));
+    testVector({{"a", 3}}, getSubpatterns("???a???", '?'));
+}
+
+TEST(subpatterns, many_subpatterns) {
+    testVector({{"a", 1}, {"b", 3}}, getSubpatterns("?a?b", '?'));
+    testVector({{"a", 1}, {"bba", 5}}, getSubpatterns("?a???bba", '?'));
+}
+
+TEST(subpattern, subpattern_occurence) {
+    testVector({/*0 - 1,*/ 2 - 1}, getSubpatternMatches({"a", 1}, "aba")); // ?a
+    testVector({/*0 - 3, */4 - 3, 8 - 3, 10 - 3}, 
+            getSubpatternMatches({"aba", 3}, "abacabadababa")); // ???aba
+}
+
+TEST(intersection, intersection) {
+    testVector({2, 3}, intersectVectors({{1, 2, 3}, {2, 3, 4}}));
+    testVector({1, 3}, intersectVectors({{1, 2, 3}, {1, 3, 4}}));
+    testVector({1, 2, 3}, intersectVectors({{1, 2, 3}, {1, 3, 4, 2}}));
+    testVector({1, 2, 3}, intersectVectors({{0, 1, 2, 3, 5}, {1, 3, 4, 2}}));
+    testVector({}, intersectVectors({{1, 2}, {3, 4}}));
+}
+
+TEST(fuzzy_pattern, fuzzy_pattern) {
+    testVector({0, 1, 2}, getFuzzyPatternMatches("a", "aaa"));
+    testVector({0}, getFuzzyPatternMatches("a?b", "aab"));
+    testVector({0}, getFuzzyPatternMatches("a?b", "abb"));
+    testVector({0}, getFuzzyPatternMatches("a??", "aaa"));
+    testVector({0, 2, 5}, getFuzzyPatternMatches("ab?", "ababcabc"));
+    testVector({0, 1, 2, 3, 4, 5}, getFuzzyPatternMatches("???", "ababcabc"));
 }
 
 } // namespace tanyatik
