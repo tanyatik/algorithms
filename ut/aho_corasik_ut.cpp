@@ -41,16 +41,27 @@ TEST(aho_corasik, empty_trie_fill) {
 }
 
 typedef std::map<std::string, std::set<size_t>> ExpectedMap;
-typedef std::map<size_t, std::set<size_t>> FoundMap;
+
+ExpectedMap getResultMap(const std::vector<std::vector<size_t>> &result,
+        const std::vector<std::string> patterns) {
+    ExpectedMap result_map;
+
+    assert(result.size() == patterns.size());
+    for (size_t result_index = 0; result_index < result.size(); ++result_index) {
+        const auto &matches = result[result_index];
+        if (!matches.empty()) {
+            result_map[patterns[result_index]].insert(matches.begin(), matches.end());
+        }
+    }
+
+    return std::move(result_map);
+}
 
 void checkMap(ExpectedMap expected, 
-        FoundMap result_index_map, 
+        std::vector<std::vector<size_t>> result_matches, 
         const std::vector<std::string> patterns) {
-    ExpectedMap result;
-    for (const auto &result_index: result_index_map) {
-        result[patterns[result_index.first]] = result_index.second;
-    }
-    
+    ExpectedMap result = getResultMap(result_matches, patterns);
+
     EXPECT_EQ(expected.size(), result.size()) << "not all matches found";
     for (auto match: expected) {
         auto &expected_matches = expected[match.first];
@@ -73,7 +84,7 @@ void checkPatternsMatching(const std::string &text,
     PatternsMatcher matcher;
     matcher.init(patterns);
 
-    FoundMap found_map = matcher.searchPatterns(text);
+    auto found_map = matcher.searchPatterns(text);
     checkMap(expected_map, found_map, patterns);
 }
 
@@ -111,3 +122,30 @@ TEST(aho_corasik, long_string_matcher_fill) {
          {"cccb", {15, 21}}});
 }
 
+TEST(word_counter, with_2_letters_of_length_5_except_a) {
+    StringsCounter counter;
+    counter.init({"a"});
+
+    EXPECT_EQ(1, counter.countExcludedStrings(5, 2));
+}
+
+TEST(word_counter, with_1_letter_of_length_5_except_a_aa) {
+    StringsCounter counter;
+    counter.init({"a", "aa"});
+
+    EXPECT_EQ(0, counter.countExcludedStrings(5, 1));
+}
+
+TEST(word_counter, with_2_letters_of_length_5_except_ab) {
+    StringsCounter counter;
+    counter.init({"ab"});
+
+    EXPECT_EQ(6, counter.countExcludedStrings(5, 2));
+}
+
+TEST(word_counter, with_2_letters_of_length_5) {
+    StringsCounter counter;
+    counter.init({});
+
+    EXPECT_EQ(32, counter.countExcludedStrings(5, 2));
+}

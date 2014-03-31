@@ -46,21 +46,16 @@ public:
     }
 
     bool hasTransition(Node node, char symbol) const { 
-        assert(node != NO_TRANSITION);
-        assert(symbol - MIN_SYMBOL >= 0 && symbol - MIN_SYMBOL < 30);
         const auto &transitions = nodes_[node].transitions_;
 
         return transitions.at(symbol - MIN_SYMBOL) != NO_TRANSITION;
     }
 
     const Node getTransition(Node node, char symbol) const {
-        assert(symbol - MIN_SYMBOL >= 0 && symbol - MIN_SYMBOL < 30);
-
         return nodes_[node].transitions_.at(symbol - MIN_SYMBOL);
     }
 
     void addTransition(Node node, char symbol, Node transition) {
-        assert(node != NO_TRANSITION);
         nodes_[node].transitions_[symbol - MIN_SYMBOL] = transition;
     }
 
@@ -159,6 +154,12 @@ public:
     void init(std::vector<std::string> patterns) {
         pattern_count_ = patterns.size();
         initTrie(patterns);
+
+        fail_transitions_.resize(trie_.getNodesCount());
+        pattern_matches_.resize(trie_.getNodesCount());
+
+        std::fill(fail_transitions_.begin(), fail_transitions_.end(), PatternTrie::NO_TRANSITION);
+
         initAutomata(); 
     }
 
@@ -176,56 +177,6 @@ protected:
         }
     }
 
-/*
-    size_t getDebugStateNumber(PatternTrie::Node node, 
-            std::map<PatternTrie::Node, size_t> *node_numbers, 
-            size_t *node_counter) {
-        auto found = node_numbers->find(node);
-        if (found == node_numbers->end()) {
-            (*node_numbers)[node] = ++*node_counter;
-        }
-        
-        return (*node_numbers)[node];
-    }
-
-    void debugPrint() {
-        std::queue<PatternTrie::Node> queue;
-        queue.push(trie_.getRoot());
-        std::map<PatternTrie::Node, size_t> node_numbers;
-
-        size_t node_counter = 0;
-        node_numbers[queue.front()] = node_counter;
-
-        while (!queue.empty()) {
-            auto node = queue.front();
-            size_t node_number = 
-                getDebugStateNumber(node, &node_numbers, &node_counter);
-            queue.pop();
-
-            std::cout << node_number << "\tfail: " <<
-                getDebugStateNumber(getFailTransition(node), &node_numbers, &node_counter);
-
-            std::cout << "\tgoto: ";
-
-            for (const auto &transition: node->getTransitions()) {
-                auto symbol = transition.first;
-                auto state = transition.second; 
-
-                size_t state_number = getDebugStateNumber(state, &node_numbers, &node_counter);
-
-                std::cout << " { " << symbol << " -> " << state << " } ";
-                queue.push(state);
-            }
-            std::cout << "\tmatches: { ";
-            for (const auto &match: pattern_matches_[node]) { 
-                std::cout << match << " ";
-            }
-            std::cout << " } ";
-            std::cout << "is terminal: " << isTerminalState(node);
-            std::cout << std::endl;
-        }
-    }
-*/
 private: 
     void initTrie(const std::vector<std::string> &patterns) {
         for (size_t pattern_index = 0; pattern_index < patterns.size(); ++pattern_index) {
@@ -289,12 +240,7 @@ protected: PatternTrie::Node getRoot() const {
     }
 
     bool isTerminalState(PatternTrie::Node node) const {
-        auto found = pattern_matches_.find(node);
-        if (found != pattern_matches_.end()) {
-            return (found->second.size() > 0);
-        }
-        
-        return false;
+        return (pattern_matches_.at(node).size() > 0);
     }
 
     PatternTrie::Node getGotoTransition(PatternTrie::Node node, char symbol) const {
@@ -310,21 +256,15 @@ protected: PatternTrie::Node getRoot() const {
     }
 
     PatternTrie::Node getFailTransition(PatternTrie::Node node) const {
-        auto found = fail_transitions_.find(node);
-        if (found != fail_transitions_.end()) {
-            return found->second;
+        if (fail_transitions_.at(node) != PatternTrie::NO_TRANSITION) {
+            return fail_transitions_.at(node);
         } else {
             return trie_.getRoot();
         }
     }
 
     std::vector<size_t> getPatternMatches(PatternTrie::Node node) const {
-        auto found = pattern_matches_.find(node);
-        if (found != pattern_matches_.end()) {
-            return found->second;
-        }
-        
-        return std::vector<size_t>();
+        return pattern_matches_.at(node);
     }
 
     size_t getNodesCount() const {
@@ -334,10 +274,8 @@ protected: PatternTrie::Node getRoot() const {
 private:
     PatternTrie trie_;
 
-    std::map<PatternTrie::Node, PatternTrie::Node> goto_transitions_;
-    std::map<PatternTrie::Node, PatternTrie::Node> fail_transitions_;
-    std::map<PatternTrie::Node, std::vector<size_t>> pattern_matches_;
-
+    std::vector<PatternTrie::Node> fail_transitions_;
+    std::vector<std::vector<size_t>> pattern_matches_;
     int pattern_count_;
 };
 
