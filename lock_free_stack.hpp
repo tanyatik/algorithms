@@ -1,15 +1,19 @@
+#pragma once 
+
 #include <atomic>
 
 #include <gtest/gtest.h>
 
-template<typename T>
-class lock_free_stack_t {
-private:
-    struct node_t {
-        T data;
-        node_t *next;
+namespace tanyatik {
 
-        node_t(const T &data) :
+template<typename T>
+class LockFreeStack {
+private:
+    struct Node {
+        T data;
+        Node *next;
+
+        Node(const T &data) :
             data(data),
             next(nullptr)
             {}
@@ -17,18 +21,18 @@ private:
 
     std::atomic<int> in_pop_;
     std::atomic<int> delete_size_;
-    std::atomic<node_t *> head_;
-    std::atomic<node_t *> delete_list_;
+    std::atomic<Node *> head_;
+    std::atomic<Node *> delete_list_;
 
 public:
-    lock_free_stack_t() :
+    LockFreeStack() :
         in_pop_(0),
         head_(nullptr),
         delete_list_(nullptr)
         {}
 
     void push(const T &data) {
-        auto t = new node_t(data);
+        auto t = new Node(data);
         t->next = head_.load();
         while (!head_.compare_exchange_weak(t->next, t))
             ;
@@ -36,7 +40,7 @@ public:
 
     bool pop(T &data) {
         ++in_pop_;
-        node_t *t = head_.load();
+        Node *t = head_.load();
         while(t && !head_.compare_exchange_weak(t, t->next))
             ;
         if (!t) {
@@ -48,9 +52,9 @@ public:
         return true;
     }
 
-    void clean(node_t *t) {
+    void clean(Node *t) {
         if(in_pop_ == 1) {
-            node_t *list = delete_list_.exchange(nullptr);
+            Node *list = delete_list_.exchange(nullptr);
             if (--in_pop_ == 0) {
                 delete_size_ = 0;
                 do_delete(list);
@@ -65,8 +69,8 @@ public:
         }
     }
 
-    void do_delete(node_t *node_list) {
-        node_t *pointer = node_list;
+    void do_delete(Node *node_list) {
+        Node *pointer = node_list;
         while (pointer) {
             auto to_delete = pointer;
             pointer = pointer->next;
@@ -74,14 +78,14 @@ public:
         }
     }
 
-    void enqueue(node_t *begin, node_t *end) {
+    void enqueue(Node *begin, Node *end) {
         end->next = delete_list_.load();
         while (!delete_list_.compare_exchange_weak(end->next, begin))
             ;
     }
 
-    void enqueue(node_t *list) {
-        node_t *begin = list, *end = list;
+    void enqueue(Node *list) {
+        Node *begin = list, *end = list;
         while (end->next != nullptr) {
             end = end->next;
         }
@@ -92,3 +96,5 @@ public:
         return delete_size_;
     }
 };
+
+} // namespace tanyatik

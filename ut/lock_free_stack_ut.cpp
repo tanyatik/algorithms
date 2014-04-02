@@ -9,8 +9,10 @@
 
 #include "../lock_free_stack.hpp"
 
-TEST(lock_free_stack_t, push_pop) {
-    lock_free_stack_t<int> stack;
+namespace tanyatik {
+
+TEST(LockFreeStack, push_pop) {
+    LockFreeStack<int> stack;
     int value;
 
     stack.push(3);
@@ -19,8 +21,8 @@ TEST(lock_free_stack_t, push_pop) {
     EXPECT_EQ(3, value);
 }
 
-TEST(lock_free_stack_t, push_push_pop_pop) {
-    lock_free_stack_t<int> stack;
+TEST(LockFreeStack, push_push_pop_pop) {
+    LockFreeStack<int> stack;
     int value1, value2;
 
     stack.push(3);
@@ -35,14 +37,14 @@ TEST(lock_free_stack_t, push_push_pop_pop) {
 const int THREADS_COUNT = 100;
 const int ELEMENTS_COUNT = 100;
 
-void write_procedure(lock_free_stack_t<int> *stack, const std::vector<int> &data) {
+void write_procedure(LockFreeStack<int> *stack, const std::vector<int> &data) {
     for (int i = 0; i < data.size(); ++i) {
         stack->push(data[i]);
         //std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
-void read_procedure(lock_free_stack_t<int> *stack, std::vector<int> *result_data) {
+void read_procedure(LockFreeStack<int> *stack, std::vector<int> *result_data) {
     for (int i = 0; i < ELEMENTS_COUNT; ++i) {
         int value = 0;
         while (!stack->pop(value)) 
@@ -79,8 +81,8 @@ std::vector<std::vector<int> > generate_data() {
     return std::move(data);
 }
 
-TEST(lock_free_stack_t, many_threads) {
-    lock_free_stack_t<int> stack;
+TEST(LockFreeStack, many_threads) {
+    LockFreeStack<int> stack;
  
     std::vector<std::vector<int> > data = generate_data();
     std::vector<std::vector<int> > result_data(THREADS_COUNT);
@@ -112,3 +114,5 @@ TEST(lock_free_stack_t, many_threads) {
         EXPECT_EQ(all_data[i], all_result_data[i]);
     } 
 }
+
+} // namespace tanyatik
