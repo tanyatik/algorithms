@@ -57,7 +57,7 @@ public:
             Node *list = delete_list_.exchange(nullptr);
             if (--in_pop_ == 0) {
                 delete_size_ = 0;
-                do_delete(list);
+                doDelete(list);
             } else if (list) {
                 enqueue(list);
             }
@@ -69,7 +69,7 @@ public:
         }
     }
 
-    void do_delete(Node *node_list) {
+    void doDelete(Node *node_list) {
         Node *pointer = node_list;
         while (pointer) {
             auto to_delete = pointer;
@@ -92,7 +92,7 @@ public:
         enqueue(list, end);
     }
 
-    int get_delete_queue_size() {
+    int getDeleteQueueSize() {
         return delete_size_;
     }
 };
