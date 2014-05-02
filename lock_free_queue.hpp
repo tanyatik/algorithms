@@ -1,5 +1,10 @@
 #include <atomic>
 
+namespace tanyatik {
+
+namespace util {
+} // namespace util
+
 template<typename T>
 class LockFreeQueue {
 private:
@@ -13,32 +18,32 @@ private:
             {}
     };
 
-    struct RootNode;
+    struct QueueSnapshot;
 
     typedef std::atomic<ListNode *> ListNodePtr;
-    typedef std::atomic<RootNode *> RootNodePtr;
+    typedef std::atomic<QueueSnapshot *> QueueSnapshotPtr;
 
-    struct RootNode {
+    struct QueueSnapshot {
         ListNodePtr push_queue;
         ListNodePtr pop_queue;
         ListNodePtr to_delete;
-        RootNode *next_former_root;
+        QueueSnapshot *next_old_snapshot;    
     };
 
-    RootNodePtr actual_root;
-    std::atomic<int> free_mem_counter_;
+    QueueSnapshotPtr current_snapshot_;
+    std::atomic<int> active_threads_;
 
-    RootNodePtr former_root_;
+    QueueSnapshotPtr old_snapshot_list_;
 
 public: 
     LockFreeQueue() :
-        actual_root(new RootNode()),
-        free_mem_counter_(0),
-        former_root_(nullptr)
+        current_snapshot_(new QueueSnapshot()),
+        active_threads_(0),
+        old_snapshot_list_(nullptr)
         {}
 
     ~LockFreeQueue() {
-        RootNode *current = actual_root.load();
+        QueueSnapshot *current = current_snapshot_.load();
         incActiveThreads();
         decActiveThreads();
         deleteList(current->push_queue);
@@ -51,64 +56,194 @@ public:
         ListNode *node(new ListNode(data));
 
         // make a copy
-        RootNode *new_root(new RootNode());
+        QueueSnapshot *new_snapshot(new QueueSnapshot());
 
         incActiveThreads();
         
         while (true) {
-            // try update actual_root with new_root,
-            // which is copied actual_root with new_node
-            RootNode *current = actual_root.load();
+            // try update current_snapshot_ with new_snapshot,
+            // which is copied current_snapshot_ with new_node
+            QueueSnapshot *current = current_snapshot_.load();
 
-            new_root->push_queue = node;
+            new_snapshot->push_queue = node;
             node->next = current->push_queue.load();
 
-            new_root->pop_queue = current->pop_queue.load();
+            new_snapshot->pop_queue = current->pop_queue.load();
 
-            // expect new_root in actual_root, if yes, put current into actual_root
-            if (actual_root.compare_exchange_weak(current, new_root)) {
+            // expect new_snapshot in current_snapshot_, if yes, put current into current_snapshot_
+            if (current_snapshot_.compare_exchange_weak(current, new_snapshot)) {
                 decActiveThreads();
-                pushDeleteRoot(current);
+                addOldSnapshot(current);
                 break;
             }  
         }
     }
 
-    void pushDeleteRoot(RootNode *current) {
+    bool dequeue(T *data) {
+        incActiveThreads();        
+        QueueSnapshot *new_snapshot = nullptr;
+
         while(true) {
-            current->next_former_root = former_root_.load();
+            QueueSnapshot *current = current_snapshot_.load();
+
+            if (current->pop_queue == nullptr && current->push_queue == nullptr) {
+                if (new_snapshot) {
+                    delete new_snapshot;
+                }
+                decActiveThreads();
+                return false;
+            }
+
+            if (current->pop_queue != nullptr) {
+                // can use first element from pop_queue as data
+                auto pop_queue = current->pop_queue.load();
+
+                // make new version of current_snapshot (without first element of pop_queue) 
+                if (!new_snapshot) {
+                    new_snapshot = new QueueSnapshot();
+                }
+
+                new_snapshot->push_queue = current->push_queue.load();
+                new_snapshot->pop_queue.store(pop_queue->next);
+
+                if (current_snapshot_.compare_exchange_weak(current, new_snapshot)) {
+                    *data = pop_queue->data;
+                    pop_queue->next = nullptr;                
     
-            if (former_root_.compare_exchange_strong(current->next_former_root, current)) {
+                    addToDeleteList(current, pop_queue);                
+                    addOldSnapshot(current);
+
+                    decActiveThreads();
+
+                    return true;
+                } else {
+                    continue;
+                }
+            }
+
+            // make new version of snapshot with pop_queue as reversed push_queue
+            // in next iteration of this cycle, we will take an element from pop_queue
+            if (!new_snapshot) {
+                new_snapshot = new QueueSnapshot();
+            }
+            
+            new_snapshot->push_queue = nullptr; 
+
+            ListNode *reversed_list(makeReversedList(current->push_queue)); 
+
+            new_snapshot->pop_queue.store(reversed_list);
+            if (current_snapshot_.compare_exchange_weak(current, new_snapshot)) {
+                addToDeleteList(current, current->push_queue);
+                current->push_queue = nullptr;
+                addOldSnapshot(current);
+
+                new_snapshot = nullptr;
+            } else {
+                // reversed list is no longer needed
+                deleteList(new_snapshot->pop_queue);
+                continue;
+            }
+        }
+    }
+
+    void debugPrint() const {
+        std::cout << "Actual snapshot: " << std::endl;
+        debugPrint(current_snapshot_.load());
+        std::cout << "Former snapshot: " << std::endl;
+        debugPrint(old_snapshot_list_.load());
+    }
+
+private:
+    static void debugPrint(ListNode *list) {
+        std::cout << "{ "; 
+        while (list != nullptr) {
+            std::cout << list << ":" << list->data << " ";
+            list = list->next;
+        }
+        std::cout << " }";
+    }
+
+    static void debugPrint(QueueSnapshot *snapshot) {
+        std::cout << "Snapshot: " << snapshot << std::endl;
+        if (snapshot == nullptr) {
+            return;
+        }
+
+        std::cout << "push queue: ";
+        debugPrint(snapshot->push_queue);
+        std::cout << std::endl;
+
+        std::cout << "pop queue: ";
+        debugPrint(snapshot->pop_queue);
+        std::cout << std::endl;
+        
+        std::cout << "to delete: ";
+        debugPrint(snapshot->to_delete);
+        std::cout << std::endl;
+
+        std::cout << "next old snapshot: ";
+        debugPrint(snapshot->next_old_snapshot);
+    }
+
+    static ListNode *makeReversedList(ListNode *list) {
+        ListNode *straight = list;
+        ListNode *reversed = nullptr;
+
+        while (straight != nullptr) {
+            auto current_reversed = new ListNode(straight->data);
+            current_reversed->next = reversed;
+
+            reversed = current_reversed;
+            straight = straight->next;
+        }
+
+        return reversed;
+    }
+
+    static void addToDeleteList(QueueSnapshot *snapshot, ListNode *element) {
+        while (true) {
+            auto to_delete = snapshot->to_delete.load();
+        
+            if (snapshot->to_delete.compare_exchange_weak(to_delete, element)) {
+                break;
+            }
+        }
+    }
+
+    void addOldSnapshot(QueueSnapshot *current) {
+        while(true) {
+            current->next_old_snapshot = old_snapshot_list_.load();
+    
+            if (old_snapshot_list_.compare_exchange_weak(current->next_old_snapshot, current)) {
                 break;    
             } 
         }
     }
 
-    void tryDeleteExpiredRoots() {
-        RootNode *curent_former = former_root_.load();
+    void tryDeleteOldSnapshots() {
+        QueueSnapshot *current_old = old_snapshot_list_.load();
 
-        if (!curent_former) {
+        if (!current_old) {
             return;
         }
 
-
         // if the only thread tries to work with queue
-        if (free_mem_counter_ == 1) {
-            // expect nullptr, if yes, put curent_former into former_root_
+        if (active_threads_ == 1) {
+            // expect nullptr, if yes, put current_old into old_snapshot_list_
             
-            RootNode *desired = nullptr;
-            if (former_root_.compare_exchange_strong(curent_former, desired)) {
-                while (curent_former) {
-                    auto tmp = curent_former->next_former_root;
-                    deleteList(curent_former->to_delete);
-                    delete curent_former;
-                    curent_former = tmp;
+            QueueSnapshot *desired = nullptr;
+            if (old_snapshot_list_.compare_exchange_strong(current_old, desired)) {
+                while (current_old) {
+                    auto tmp = current_old->next_old_snapshot;
+                    deleteList(current_old->to_delete);
+                    delete current_old;
+                    current_old = tmp;
                 }
             }
         }
     }
 
-    void deleteList(ListNode *node_list) {
+    static void deleteList(ListNode *node_list) {
         ListNode *pointer = node_list;
         while (pointer) {
             auto deleted = pointer;
@@ -118,11 +253,13 @@ public:
     }
 
     void incActiveThreads() {
-        ++free_mem_counter_;
+        ++active_threads_;
     }
 
     void decActiveThreads() {
-        tryDeleteExpiredRoots();
-        --free_mem_counter_;
+        tryDeleteOldSnapshots();
+        --active_threads_;
     }
 };
+
+} // namespace tanyatik
