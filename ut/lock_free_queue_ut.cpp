@@ -12,19 +12,20 @@
 
 namespace tanyatik {
 
-TEST(LockFreeQueue, enqueue) {
+TEST(LockFreeQueue, push) {
     LockFreeQueue<int> queue;
 
-    queue.enqueue(1);
-    queue.enqueue(2);
+    queue.push(1);
+    queue.push(2);
 }
 TEST(LockFreeQueue, dequeue) {
     LockFreeQueue<int> queue;
-    queue.enqueue(1);
-    queue.enqueue(2);
+    queue.push(1);
+    queue.push(2);
 
     int pop = 0;
 
+    ASSERT_FALSE(queue.empty());
     bool result = queue.dequeue(&pop);
     ASSERT_TRUE(result);
     ASSERT_EQ(1, pop);
@@ -34,16 +35,17 @@ TEST(LockFreeQueue, dequeue) {
 
     result = queue.dequeue(&pop);
     ASSERT_FALSE(result);
+    ASSERT_TRUE(queue.empty());
 }
 
-TEST(LockFreeQueue, multithread_enqueue) {
+TEST(LockFreeQueue, multithread_push) {
     LockFreeQueue<int> queue;
     
     std::vector<std::thread> writers;
     const int WRITERS_COUNT = 100;
 
     for (int i = 0; i < WRITERS_COUNT; ++i) {
-        writers.emplace_back(std::thread([&] () { queue.enqueue(1); }));
+        writers.emplace_back(std::thread([&] () { queue.push(1); }));
     }
 
     for (auto &writer: writers) {
@@ -60,7 +62,7 @@ TEST(LockFreeQueue, multithread_dequeue) {
     std::vector<int> read_result(READERS_COUNT);
 
     for (int i = 0; i < READERS_COUNT; ++i) {
-        queue.enqueue(i);
+        queue.push(i);
     }
 
     for (int reader = 0; reader < READERS_COUNT; ++reader) {
@@ -76,6 +78,7 @@ TEST(LockFreeQueue, multithread_dequeue) {
 
     std::sort(read_result.begin(), read_result.end());
 
+    ASSERT_TRUE(queue.empty());
     for (int i = 0; i < READERS_COUNT; ++i) {
         ASSERT_EQ(i, read_result[i]);
     }
@@ -86,7 +89,7 @@ const int ELEMENTS_COUNT = 100;
 
 void writeProcedure(LockFreeQueue<int> *queue, const std::vector<int> &data) {
     for (int i = 0; i < data.size(); ++i) {
-        queue->enqueue(data[i]);
+        queue->push(data[i]);
     }
 }
 
@@ -100,7 +103,7 @@ void readProcedure(LockFreeQueue<int> *queue, std::vector<int> *result_data) {
 }
 
 
-TEST(LockFreeQueue, multithread_enqueue_dequeue) {
+TEST(LockFreeQueue, multithread_push_dequeue) {
     testMultithreadContainer<LockFreeQueue>(writeProcedure, 
             readProcedure, 
             THREADS_COUNT, 

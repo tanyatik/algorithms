@@ -12,7 +12,7 @@ private:
         T data;
         std::atomic<ListNode *> next;
 
-        ListNode(const T &data) :
+        ListNode(T data) :
             data(data),
             next(nullptr)
             {}
@@ -35,26 +35,7 @@ private:
 
     QueueSnapshotPtr old_snapshot_list_;
 
-public: 
-    LockFreeQueue() :
-        current_snapshot_(new QueueSnapshot()),
-        active_threads_(0),
-        old_snapshot_list_(nullptr)
-        {}
-
-    ~LockFreeQueue() {
-        QueueSnapshot *current = current_snapshot_.load();
-        incActiveThreads();
-        decActiveThreads();
-        deleteList(current->push_queue);
-        deleteList(current->pop_queue);
-        delete current;
-    }
-
-    void enqueue(const T &data) {
-        // create new element
-        ListNode *node(new ListNode(data));
-
+    void pushBody(ListNode *node) {
         // make a copy
         QueueSnapshot *new_snapshot(new QueueSnapshot());
 
@@ -77,6 +58,32 @@ public:
                 break;
             }  
         }
+    }
+
+public: 
+    LockFreeQueue() :
+        current_snapshot_(new QueueSnapshot()),
+        active_threads_(0),
+        old_snapshot_list_(nullptr)
+        {}
+
+    ~LockFreeQueue() {
+        QueueSnapshot *current = current_snapshot_.load();
+        incActiveThreads();
+        decActiveThreads();
+        deleteList(current->push_queue);
+        deleteList(current->pop_queue);
+        delete current;
+    }
+
+    void push(T data) {
+        ListNode *node(new ListNode(data));
+        pushBody(node);
+    }
+
+    void enqueue(T &&data) {
+        ListNode *node(new ListNode(data));
+        pushBody(node);
     }
 
     bool dequeue(T *data) {
@@ -151,6 +158,14 @@ public:
         debugPrint(current_snapshot_.load());
         std::cout << "Former snapshot: " << std::endl;
         debugPrint(old_snapshot_list_.load());
+    }
+
+    bool empty() {
+        incActiveThreads();
+        auto snapshot = current_snapshot_.load();
+        bool empty = snapshot->push_queue == nullptr && snapshot->pop_queue == nullptr;
+        decActiveThreads();
+        return empty;
     }
 
 private:
