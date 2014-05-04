@@ -102,12 +102,24 @@ void readProcedure(LockFreeQueue<int> *queue, std::vector<int> *result_data) {
     }
 }
 
-
 TEST(LockFreeQueue, multithread_push_dequeue) {
     testMultithreadContainer<LockFreeQueue>(writeProcedure, 
             readProcedure, 
             THREADS_COUNT, 
             ELEMENTS_COUNT);
+}
+
+struct Uncopyable {
+    int x;
+    Uncopyable(const Uncopyable &) = delete;
+    Uncopyable(Uncopyable &&) = default;
+    Uncopyable(int x = 0) : x(x) {}
+};
+
+TEST(LockFreeQueue, uncopyable_enqueue) { 
+    LockFreeQueue<std::shared_ptr<Uncopyable>> queue;
+
+    queue.push(std::make_shared<Uncopyable>(2));
 }
 
 } // namespace tanyatik

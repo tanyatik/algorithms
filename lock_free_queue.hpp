@@ -1,9 +1,8 @@
+#pragma once
+
 #include <atomic>
 
 namespace tanyatik {
-
-namespace util {
-} // namespace util
 
 template<typename T>
 class LockFreeQueue {
@@ -80,12 +79,12 @@ public:
         ListNode *node(new ListNode(data));
         pushBody(node);
     }
-
+/*
     void enqueue(T &&data) {
         ListNode *node(new ListNode(data));
         pushBody(node);
     }
-
+*/
     bool dequeue(T *data) {
         incActiveThreads();        
         QueueSnapshot *new_snapshot = nullptr;
