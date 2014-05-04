@@ -34,31 +34,6 @@ private:
 
     QueueSnapshotPtr old_snapshot_list_;
 
-    void pushBody(ListNode *node) {
-        // make a copy
-        QueueSnapshot *new_snapshot(new QueueSnapshot());
-
-        incActiveThreads();
-        
-        while (true) {
-            // try update current_snapshot_ with new_snapshot,
-            // which is copied current_snapshot_ with new_node
-            QueueSnapshot *current = current_snapshot_.load();
-
-            new_snapshot->push_queue = node;
-            node->next = current->push_queue.load();
-
-            new_snapshot->pop_queue = current->pop_queue.load();
-
-            // expect new_snapshot in current_snapshot_, if yes, put current into current_snapshot_
-            if (current_snapshot_.compare_exchange_weak(current, new_snapshot)) {
-                decActiveThreads();
-                addOldSnapshot(current);
-                break;
-            }  
-        }
-    }
-
 public: 
     LockFreeQueue() :
         current_snapshot_(new QueueSnapshot()),
@@ -77,15 +52,31 @@ public:
 
     void push(T data) {
         ListNode *node(new ListNode(data));
-        pushBody(node);
+        // make a copy
+        QueueSnapshot *new_snapshot(new QueueSnapshot());
+
+        incActiveThreads();
+        
+        while (true) {
+            // try update current_snapshot_ with new_snapshot,
+            // which is copied current_snapshot_ with new_node
+            QueueSnapshot *current = current_snapshot_.load();
+
+            new_snapshot->push_queue = node;
+            node->next = current->push_queue.load();
+
+            new_snapshot->pop_queue = current->pop_queue.load();
+
+            // expect new_snapshot in current_snapshot_, if yes, put current into current_snapshot_
+            if (current_snapshot_.compare_exchange_weak(current, new_snapshot)) {
+                addOldSnapshot(current);
+                decActiveThreads();
+                break;
+            }  
+        }
     }
-/*
-    void enqueue(T &&data) {
-        ListNode *node(new ListNode(data));
-        pushBody(node);
-    }
-*/
-    bool dequeue(T *data) {
+
+    bool tryPop(T *data) {
         incActiveThreads();        
         QueueSnapshot *new_snapshot = nullptr;
 
@@ -162,7 +153,7 @@ public:
     bool empty() {
         incActiveThreads();
         auto snapshot = current_snapshot_.load();
-        bool empty = snapshot->push_queue == nullptr && snapshot->pop_queue == nullptr;
+        bool empty = (snapshot->push_queue == nullptr && snapshot->pop_queue == nullptr);
         decActiveThreads();
         return empty;
     }
@@ -258,6 +249,8 @@ private:
     }
 
     static void deleteList(ListNode *node_list) {
+        //std::cout << "delete list\n";
+
         ListNode *pointer = node_list;
         while (pointer) {
             auto deleted = pointer;
