@@ -60,16 +60,11 @@ public:
     void addProduction(Symbol symbol, const Production &production);
     void removeProduction(Symbol symbol, size_t production_index) {
         auto &productions = productions_table_.at(symbol);
-        //productions.at(production_index).clear();
         productions.erase(productions.begin() + production_index);
     }
     size_t getProductionsCount(Symbol symbol) const;
     const Production &getProduction(Symbol symbol, size_t production_index) const;
     bool isEpsilonProduction(const Production &production) const;
-
-    //void removeChainProductions();
-    //void removeUnusedProductions();
-    //void removeSeveralTerminalsInProductions();
 
     void readProductionFromString(const std::string &string);
     void debugPrintNonterminal(Symbol symbol);
@@ -147,16 +142,19 @@ void Grammar::addProduction(Symbol symbol, const Production &production) {
 void Grammar::readProductionFromString(const std::string &production_string) {
     auto symbol = production_string.begin();
     if (!(FIRST_NONTERMINAL <= *symbol && *symbol <= LAST_NONTERMINAL)) {
-        throw std::runtime_error("Wrong symbol in production (should be nonterminal): " + std::to_string(*symbol));
+        throw std::runtime_error("Wrong symbol in production (should be nonterminal): " + 
+                std::to_string(*symbol));
     }
     Symbol left_nonterminal = makeNonterminal(*symbol);
     ++symbol;
 
     if (*symbol++ != '-') {
-        throw std::runtime_error("Wrong symbol in production: (should be -)" + std::to_string(*symbol));
+        throw std::runtime_error("Wrong symbol in production: (should be -)" + 
+                std::to_string(*symbol));
     } 
     if (*symbol++ != '>') {
-        throw std::runtime_error("Wrong symbol in production: (should be >)" + std::to_string(*symbol));
+        throw std::runtime_error("Wrong symbol in production: (should be >)" + 
+                std::to_string(*symbol));
     } 
 
     Production production;
@@ -365,7 +363,9 @@ Grammar readGrammar(std::istream &stream = std::cin) {
     size_t total_productions_count; 
     std::cin >> total_productions_count; 
 
-    for (auto production_index = 0; production_index < total_productions_count; ++production_index) {
+    for (auto production_index = 0; 
+            production_index < total_productions_count; 
+            ++production_index) {
         std::string string;
         stream >> string;
         grammar.readProductionFromString(string);
@@ -464,9 +464,6 @@ int main() {
     Grammar g = readGrammar();
     LongProductionsRemover::removeLongProductions(&g);
     EpsilonProducingProductionsRemover::removeEpsilonProducingProductions(&g);
-    //g.removeLongProductions();
-    //g.debugPrint();
-    //g.removeEpsilonProducingProductions();
     g.debugPrint();
     return 0;
 }
