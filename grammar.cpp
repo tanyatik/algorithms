@@ -64,12 +64,20 @@ public:
     }
     size_t getProductionsCount(Symbol symbol) const;
     const Production &getProduction(Symbol symbol, size_t production_index) const;
+    void changeProduction(Symbol symbol, size_t production_index, Production &&production) {
+        productions_table_.at(symbol).at(production_index) = production;
+    }
     bool isEpsilonProduction(const Production &production) const;
 
     void readProductionFromString(const std::string &string);
     void debugPrintNonterminal(Symbol symbol);
     void debugPrintProduction(const Production &production);
     void debugPrint();
+};
+
+class ProductionNonterminalizer {
+public:
+    static void nonterminalizeProductions(Grammar *grammar);
 };
 
 class LongProductionsRemover {
@@ -136,12 +144,12 @@ Grammar readGrammar(std::istream &stream = std::cin);
 
 int main() {
     Grammar g = readGrammar();
+
+    ProductionNonterminalizer::nonterminalizeProductions(&g);
     LongProductionsRemover::removeLongProductions(&g);
     EpsilonProducingProductionsRemover::removeEpsilonProducingProductions(&g);
-    std::cerr << "before remove chain\n";
     ChainProductionsRemover::removeChains(&g);
-    std::cerr << "after remove chain\n";
-    g.debugPrint();
+
     return 0;
 }
 // Grammar implementation
@@ -509,6 +517,32 @@ void LongProductionsRemover::addShortProductions(Grammar *grammar,
     Grammar::Production last_production = 
             { production.at(symbol_index), production.at(symbol_index + 1) };
     grammar->addProduction(previous_nonterminal, last_production);
+}
+
+// ProductionNonterminalizer implementation
+
+void ProductionNonterminalizer::nonterminalizeProductions(Grammar *grammar) {
+    for (int nonterminal = 0; 
+            nonterminal < grammar->getNonterminalsCount(); 
+            ++nonterminal) {    
+        for (int production_index = 0; 
+                production_index < grammar->getProductionsCount(nonterminal);
+                ++production_index) {
+            auto production = grammar->getProduction(nonterminal, production_index);
+
+            if (production.size() > 1) {
+                for (auto &symbol: production) {
+                    if (grammar->getSymbolType(symbol) == Grammar::TERMINAL) {
+                        auto new_terminal = grammar->makeNonterminal();
+                        Grammar::Production new_production = { symbol };
+                        grammar->addProduction(new_terminal, new_production);
+                        symbol = new_terminal; 
+                    }
+                }
+                grammar->changeProduction(nonterminal, production_index, std::move(production));
+            }
+        }
+    }
 }
 
 // ChainProductionsRemover implementation
