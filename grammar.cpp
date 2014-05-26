@@ -361,7 +361,7 @@ Grammar GrammarReader::readGrammar(std::istream &stream) {
     Grammar grammar;
 
     size_t total_productions_count; 
-    std::cin >> total_productions_count; 
+    stream >> total_productions_count; 
 
     for (auto production_index = 0; 
             production_index < total_productions_count; 
@@ -382,7 +382,7 @@ Grammar GrammarReader::readGrammar(std::istream &stream) {
 
 int readMaximumLength(std::istream &stream) {
     int max_length;
-    std::cin >> max_length;
+    stream >> max_length;
     return max_length;
 }
 
@@ -400,9 +400,9 @@ void Grammar::debugPrintNonterminal(Symbol symbol) const {
     }
     if (symbol >= 26) {
         std::cerr << "A";
-        std::cerr << int(symbol - 26);
+        std::cerr << static_cast<int>(symbol - 26);
     } else {
-        std::cerr << (char) (symbol + 'A');
+        std::cerr << static_cast<char>(symbol + 'A');
     }
     if (symbol == getGoal()) {
         std::cerr << "]";
@@ -414,7 +414,7 @@ void Grammar::debugPrintProduction(const Production &production) const {
         if (isNonterminal(symbol)) {
             debugPrintNonterminal(symbol);
         } else {
-            std::cerr << (char) symbol;
+            std::cerr << static_cast<char>(symbol);
         }
         std::cerr << " ";
     } 
