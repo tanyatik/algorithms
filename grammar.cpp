@@ -3,6 +3,8 @@
 #include <iostream>
 #include <set>
 #include <string>
+#include <assert.h>
+#include <algorithm>
 
 class Grammar {
 public:
@@ -14,9 +16,10 @@ public:
     static constexpr int ERROR_NONTERMINAL = -1;
 
     enum SymbolType {
+        NOT_FILLED,
         TERMINAL,
         NONTERMINAL,
-        SENTINEL
+        SENTINEL,
     };
 
 private:
@@ -59,8 +62,11 @@ public:
         return symbol_types_.at(symbol) == SENTINEL;
     }
 
-    size_t getNonterminalsCount() const;
+    size_t getFirstNonterminalIndex() const;
+    size_t getLastNonterminalIndex() const;
     Symbol makeNonterminal(); 
+    Symbol makeTerminal(char symbol); 
+    Symbol makeSentinel(); 
 
     void addProduction(Symbol symbol, const Production &production);
     void removeProduction(Symbol symbol, size_t production_index) {
@@ -93,13 +99,18 @@ private:
     enum { NOT_FILLED = -1 };
 
     std::vector<int> nonterminal_map_;
+    std::vector<int> terminal_map_;
 
     Grammar::Symbol getNonterminal(Grammar *grammar, char letter);
+    Grammar::Symbol getTerminal(Grammar *grammar, char symbol);
+    Grammar::Symbol getSentinel(Grammar *grammar);
+
     void readProductionFromString(Grammar *grammar, const std::string &production_string);
 
 public:
     GrammarReader() :
-        nonterminal_map_(LAST_NONTERMINAL - FIRST_NONTERMINAL + 1, NOT_FILLED)
+        nonterminal_map_(LAST_NONTERMINAL + 1, NOT_FILLED),
+        terminal_map_(LAST_TERMINAL + 1, NOT_FILLED)
         {}
 
     Grammar readGrammar(std::istream &stream = std::cin);
@@ -194,7 +205,8 @@ public:
     ShortestStringFinder(const Grammar &grammar, size_t max_length) :
         grammar_(grammar),
         shortest_strings_
-            (grammar.getNonterminalsCount(), std::vector<std::string>(max_length + 1, "")),
+            (grammar.getLastNonterminalIndex() + 1, 
+             std::vector<std::string>(max_length + 1, std::string())),
         max_length_(max_length)
         {}
 
@@ -222,9 +234,11 @@ int readMaximumLength(std::istream &stream = std::cin);
 void writeShortestString(const std::string &string, std::ostream &stream = std::cout);
 
 // main
-
+//#define DEBUG
 int main() {
     GrammarReader reader;
+
+    try {
     Grammar grammar = reader.readGrammar();
     int maximum_length = readMaximumLength();
 
@@ -264,13 +278,23 @@ int main() {
     auto shortest_string = finder.getShortestString();  
 
     writeShortestString(shortest_string);
-
+    } catch (...) {
+        std::cout << "IMPOSSIBLE";
+        return 0;
+    }
+#ifdef DEBUG
+    // finder.debugPrint();
+#endif 
     return 0;
 }
 
 // Grammar implementation
 
-size_t Grammar::getNonterminalsCount() const {
+size_t Grammar::getFirstNonterminalIndex() const {
+    return 0;
+}
+
+size_t Grammar::getLastNonterminalIndex() const {
     return productions_table_.size();
 }
 
@@ -282,8 +306,21 @@ void Grammar::addNonterminal(Symbol nonterminal) {
     setSymbolType(nonterminal, NONTERMINAL);        
 }
 
+Grammar::Symbol Grammar::makeTerminal(char symbol) {
+    Symbol index = static_cast<int>(symbol - 'a') + 1;
+    setSymbolType(index, TERMINAL);
+    return index;
+}
+
+Grammar::Symbol Grammar::makeSentinel() {
+    Symbol index = 0;
+    setSymbolType(index, SENTINEL);
+    return index;
+}
+
 Grammar::Symbol Grammar::makeNonterminal() {
-    Symbol new_nonterminal = productions_table_.size();
+    Symbol new_nonterminal = std::max(productions_table_.size(), 
+            static_cast<size_t>('z' - 'a' + 2));
     addNonterminal(new_nonterminal);
     return new_nonterminal;
 }
@@ -301,12 +338,17 @@ const Grammar::Production &Grammar::getProduction(Symbol symbol, size_t producti
 }
 
 bool Grammar::isEpsilonProduction(const Grammar::Production &production) const {
-    bool result = production.size() == 1 && production.at(0) == EPSILON;
+    bool result = production.size() == 1 && isSentinel(production.at(0));
+#ifdef DEBUG
+    if (result) {
+        std::cerr << "TRUE " << production.at(0) << std::endl;
+    }
+#endif
     return result;
 }
 
 Grammar::Symbol GrammarReader::getNonterminal(Grammar *grammar, char symbol) {
-    size_t symbol_index = symbol - FIRST_NONTERMINAL;
+    size_t symbol_index = symbol;
     
     if (nonterminal_map_.at(symbol_index) == NOT_FILLED) {
         nonterminal_map_.at(symbol_index) = grammar->makeNonterminal();
@@ -316,6 +358,19 @@ Grammar::Symbol GrammarReader::getNonterminal(Grammar *grammar, char symbol) {
     } 
 
     return nonterminal_map_.at(symbol_index);
+}
+
+Grammar::Symbol GrammarReader::getTerminal(Grammar *grammar, char symbol) {
+    if (terminal_map_.at(symbol) == NOT_FILLED) {
+        terminal_map_.at(symbol) = grammar->makeTerminal(symbol);
+    } 
+
+    return terminal_map_.at(symbol);
+}
+
+Grammar::Symbol GrammarReader::getSentinel(Grammar *grammar) {
+    grammar->makeSentinel();
+    return 0;
 }
 
 void GrammarReader::readProductionFromString(Grammar *grammar, 
@@ -341,11 +396,12 @@ void GrammarReader::readProductionFromString(Grammar *grammar,
    
     for (; symbol != production_string.end() && *symbol != '\0'; ++symbol) {
         if (FIRST_TERMINAL <= *symbol && *symbol <= LAST_TERMINAL) {
-            grammar->setSymbolType(*symbol, Grammar::TERMINAL);
-            production.push_back(*symbol); 
+            Grammar::Symbol terminal = getTerminal(grammar, *symbol);
+            production.push_back(terminal); 
         } else if (Grammar::EPSILON == *symbol) {
-            grammar->setSymbolType(*symbol, Grammar::SENTINEL);
-            production.push_back(*symbol);
+            // grammar->setSymbolType(*symbol, Grammar::SENTINEL); 
+            Grammar::Symbol sentinel = getSentinel(grammar);
+            production.push_back(sentinel);
         } else if (FIRST_NONTERMINAL <= *symbol && *symbol <= LAST_NONTERMINAL) {
             Grammar::Symbol nonterminal = getNonterminal(grammar, *symbol);
             production.push_back(nonterminal);
@@ -353,6 +409,10 @@ void GrammarReader::readProductionFromString(Grammar *grammar,
             throw std::runtime_error("Wrong *symbol in production: " + std::to_string(*symbol));
         }
     } 
+    if (production.empty()) {
+        Grammar::Symbol sentinel = getSentinel(grammar);
+        production.push_back(sentinel); 
+    }
 
     grammar->addProduction(left_nonterminal, production);
 }
@@ -362,6 +422,11 @@ Grammar GrammarReader::readGrammar(std::istream &stream) {
 
     size_t total_productions_count; 
     stream >> total_productions_count; 
+    if (total_productions_count == 0) {
+        std::cin >> total_productions_count;
+        std::cout << "IMPOSSIBLE";
+        exit(0);
+    }
 
     for (auto production_index = 0; 
             production_index < total_productions_count; 
@@ -398,12 +463,7 @@ void Grammar::debugPrintNonterminal(Symbol symbol) const {
     if (symbol == getGoal()) {
         std::cerr << "[";
     }
-    if (symbol >= 26) {
-        std::cerr << "A";
-        std::cerr << static_cast<int>(symbol - 26);
-    } else {
-        std::cerr << static_cast<char>(symbol + 'A');
-    }
+    std::cerr << "N" << static_cast<int>(symbol);
     if (symbol == getGoal()) {
         std::cerr << "]";
     }
@@ -413,16 +473,18 @@ void Grammar::debugPrintProduction(const Production &production) const {
     for (auto symbol: production) {
         if (isNonterminal(symbol)) {
             debugPrintNonterminal(symbol);
+        } else if (isTerminal(symbol)) {
+            std::cerr << "T" << static_cast<int>(symbol);
         } else {
-            std::cerr << static_cast<char>(symbol);
+            std::cerr << "S" << static_cast<int>(symbol);
         }
         std::cerr << " ";
     } 
 }
 
 void Grammar::debugPrint() const {
-    for (int nonterminal = 0; 
-            nonterminal < getNonterminalsCount(); 
+    for (int nonterminal = getFirstNonterminalIndex(); 
+            nonterminal < getLastNonterminalIndex(); 
             ++nonterminal) {
 
         for (int production_index = 0; 
@@ -441,8 +503,8 @@ void Grammar::debugPrint() const {
 }
 
 bool Grammar::isChomsky() const {
-    for (int nonterminal = 0; 
-            nonterminal < getNonterminalsCount(); 
+    for (int nonterminal = getFirstNonterminalIndex(); 
+            nonterminal < getLastNonterminalIndex(); 
             ++nonterminal) {
 
         for (int production_index = 0; 
@@ -476,10 +538,10 @@ bool Grammar::isChomsky() const {
 
 std::vector<bool> EpsilonProducingProductionsRemover::getEpsilonProducingNonterminals
             (Grammar *grammar, bool *induces_any) {
-    std::vector<bool> does_produce_epsilon(grammar->getNonterminalsCount(), false);
+    std::vector<bool> does_produce_epsilon(grammar->getLastNonterminalIndex(), false);
     
-    for (int nonterminal = 0; 
-            nonterminal < grammar->getNonterminalsCount(); 
+    for (int nonterminal = grammar->getFirstNonterminalIndex(); 
+            nonterminal < grammar->getLastNonterminalIndex(); 
             ++nonterminal) {
         
         bool epsilon_producing_production = false;
@@ -511,8 +573,8 @@ std::vector<bool> EpsilonProducingProductionsRemover::getEpsilonInducingNontermi
     bool answer_changed = false;
     do { 
         answer_changed = false;
-        for (int nonterminal = 0; 
-                nonterminal < grammar->getNonterminalsCount();
+        for (int nonterminal = grammar->getFirstNonterminalIndex(); 
+                nonterminal < grammar->getLastNonterminalIndex();
                 ++nonterminal) {
             if (does_induce_epsilon.at(nonterminal)) {
                 continue;
@@ -526,6 +588,11 @@ std::vector<bool> EpsilonProducingProductionsRemover::getEpsilonInducingNontermi
                 }
 
                 auto production = grammar->getProduction(nonterminal, production_index);
+
+                if (production.size() == 0) {
+                    continue;
+                }
+
                 bool epsilon_inducing_production = true;
                 for (auto symbol_iterator = production.begin();
                         symbol_iterator != production.end() && 
@@ -582,8 +649,8 @@ void EpsilonProducingProductionsRemover::addEpsilonRemovedProductions(Grammar *g
 }
 
 void EpsilonProducingProductionsRemover::removeEpsilonProductions(Grammar *grammar) { 
-    for (int nonterminal = 0; 
-            nonterminal < grammar->getNonterminalsCount(); 
+    for (int nonterminal = grammar->getFirstNonterminalIndex(); 
+            nonterminal < grammar->getLastNonterminalIndex(); 
             ++nonterminal) {
         
         for (int production_index = 0; 
@@ -602,7 +669,7 @@ void EpsilonProducingProductionsRemover::addEpsilonInducingGoal(Grammar *grammar
     auto new_goal = grammar->makeNonterminal();
     auto old_goal = grammar->getGoal();
     
-    Grammar::Production epsilon_production = { Grammar::EPSILON };
+    Grammar::Production epsilon_production = { 0 };
     grammar->addProduction(new_goal, epsilon_production);
 
     Grammar::Production old_goal_production = { old_goal };
@@ -619,8 +686,8 @@ void EpsilonProducingProductionsRemover::removeEpsilonProducingProductions(Gramm
         return;
     }
     
-    for (int nonterminal = 0; 
-            nonterminal < grammar->getNonterminalsCount(); 
+    for (int nonterminal = grammar->getFirstNonterminalIndex(); 
+            nonterminal < grammar->getLastNonterminalIndex(); 
             ++nonterminal) {
 
         int productions_count = grammar->getProductionsCount(nonterminal);     
@@ -648,8 +715,8 @@ void EpsilonProducingProductionsRemover::removeEpsilonProducingProductions(Gramm
 // LongProductionsRemover implementation
 
 void LongProductionsRemover::removeLongProductions(Grammar *grammar) {
-    for (int nonterminal = 0; 
-            nonterminal < grammar->getNonterminalsCount(); 
+    for (int nonterminal = grammar->getFirstNonterminalIndex(); 
+            nonterminal < grammar->getLastNonterminalIndex(); 
             ++nonterminal) {
 
         for (int production_index = 0; 
@@ -687,8 +754,8 @@ void LongProductionsRemover::addShortProductions(Grammar *grammar,
 // ProductionNonterminalizer implementation
 
 void ProductionNonterminalizer::nonterminalizeProductions(Grammar *grammar) {
-    for (int nonterminal = 0; 
-            nonterminal < grammar->getNonterminalsCount(); 
+    for (int nonterminal = grammar->getFirstNonterminalIndex(); 
+            nonterminal < grammar->getLastNonterminalIndex(); 
             ++nonterminal) {    
         for (int production_index = 0; 
                 production_index < grammar->getProductionsCount(nonterminal);
@@ -717,6 +784,7 @@ bool ChainProductionsRemover::isChainedProduction(Grammar *grammar,
     return (production.size() == 1 && grammar->isNonterminal(production.at(0)));
 }
 
+/*
 void ChainProductionsRemover::removeChains(Grammar *grammar) {
     std::vector<ChainedProduction> chained_productions;
     auto chain_pairs = getChainedPairs(grammar, &chained_productions);
@@ -738,7 +806,33 @@ void ChainProductionsRemover::removeChains(Grammar *grammar) {
 
     removeChainProductions(grammar, chained_productions);
 }
+*/
 
+void ChainProductionsRemover::removeChains(Grammar *grammar) {
+    std::vector<ChainedProduction> chained_productions;
+    auto chain_pairs = getChainedPairs(grammar, &chained_productions);
+    auto old_grammar = new Grammar(*grammar);
+
+    for (auto pair: chain_pairs) {
+
+        if (pair.parent == pair.child) {
+            continue;
+        }
+
+        for (int production_index = 0;
+                production_index < old_grammar->getProductionsCount(pair.child);
+                ++production_index) {
+            auto production = old_grammar->getProduction(pair.child, production_index);
+
+            if (!isChainedProduction(old_grammar, production)) {
+                grammar->addProduction(pair.parent, production);
+            }
+        }
+    }
+
+    delete old_grammar;
+    removeChainProductions(grammar, chained_productions);
+}
 
 void ChainProductionsRemover::removeChainProductions(Grammar *grammar, 
             const std::vector<ChainedProduction> &chained_productions) {
@@ -750,8 +844,8 @@ void ChainProductionsRemover::removeChainProductions(Grammar *grammar,
 std::set<ChainProductionsRemover::ChainedPair> ChainProductionsRemover::getChainedPairs
             (Grammar *grammar, std::vector<ChainedProduction> *chained_productions) {
     std::set<ChainedPair> previous_pairs, result_pairs;
-    for (int nonterminal = 0; 
-            nonterminal < grammar->getNonterminalsCount(); 
+    for (int nonterminal = grammar->getFirstNonterminalIndex(); 
+            nonterminal < grammar->getLastNonterminalIndex(); 
             ++nonterminal) {
         previous_pairs.insert(ChainedPair(nonterminal, nonterminal));
         result_pairs.insert(ChainedPair(nonterminal, nonterminal));
@@ -788,8 +882,8 @@ std::set<ChainProductionsRemover::ChainedPair> ChainProductionsRemover::getChain
 // ShortestStringFinder implementation
 
 void ShortestStringFinder::initShortestStrings() { 
-    for (int nonterminal = 0; 
-            nonterminal < grammar_.getNonterminalsCount(); 
+    for (int nonterminal = grammar_.getFirstNonterminalIndex(); 
+            nonterminal < grammar_.getLastNonterminalIndex(); 
             ++nonterminal) {
         for (int production_index = 0; 
                 production_index < grammar_.getProductionsCount(nonterminal);
@@ -797,7 +891,7 @@ void ShortestStringFinder::initShortestStrings() {
 
             auto production = grammar_.getProduction(nonterminal, production_index);
             if (production.size() == 1 && grammar_.isTerminal(production.at(0))) {
-                std::string new_string = {static_cast<char>(production.at(0))}; 
+                std::string new_string = {static_cast<char>(production.at(0) + 'a' - 1)}; 
 
                 if (shortest_strings_.at(nonterminal).at(1).empty()) {
                     shortest_strings_.at(nonterminal).at(1) = new_string;
@@ -872,8 +966,8 @@ void ShortestStringFinder::computeShortestStrings() {
     initShortestStrings();
 
     for (size_t length = 1; length < max_length_; ++length) {
-        for (int nonterminal = 0; 
-                nonterminal < grammar_.getNonterminalsCount(); 
+        for (int nonterminal = grammar_.getFirstNonterminalIndex(); 
+                nonterminal < grammar_.getLastNonterminalIndex(); 
                 ++nonterminal) {    
             shortest_strings_.at(nonterminal).at(length + 1) = 
                 computeShortestStringForNonterminal(nonterminal, length);
