@@ -17,10 +17,12 @@ bool pointInsidePolygon(Point2D point, const std::vector<Point2D>& polygon) {
     while (left < right) {
         if (left + 1 == right) {
             // found angle
-            return clockwise(*left, point, *right);
+            return (right == polygon.end()) ? false : !clockwise(*left, point, *right);
         }
 
         auto middle = left + (std::distance(left, right))/ 2;
+        assert(middle < polygon.end());
+
         double middleAngle = getAngle(*middle, first, second);
 
         if (middleAngle <= angle) {
@@ -33,8 +35,27 @@ bool pointInsidePolygon(Point2D point, const std::vector<Point2D>& polygon) {
     return false;
 }
 
+static inline double square(Point2D a, Point2D b, Point2D c) {
+    double s = fabs(wedgeProduct(a, b, c)) / 2.0;
+    return s;
+}
 
-std::vector<Point2D> convexHull(std::vector<Point2D> points, double* s) {
+static inline double signedSquare(Point2D a, Point2D b, Point2D c) {
+    double s = wedgeProduct(a, b, c) / 2.0;
+    return s;
+}
+
+double square(const std::vector<Point2D>& points) {
+    double square = 0;
+    Point2D point = points.front();
+    for (auto left = points.begin() + 1, right = left + 1; right != points.end(); ++left, ++right) {
+        square += signedSquare(point, *left, *right);
+    }
+    return fabs(square);
+}
+
+
+std::vector<Point2D> convexHull(std::vector<Point2D> points) {
     // find leftmost and rightmost points
     using std::pair;
     using std::vector;
@@ -50,7 +71,6 @@ std::vector<Point2D> convexHull(std::vector<Point2D> points, double* s) {
         return left.x < right.x || (left.x == right.x && left.y < right.y);
     });
 
-    vector<Point2D> result;
 
     Point2D leftmost = points.front();
     Point2D rightmost = points.back();
@@ -60,44 +80,31 @@ std::vector<Point2D> convexHull(std::vector<Point2D> points, double* s) {
     auto upPrev = points.end();
     auto downPrev = points.end();
 
-    if (s) {
-        *s = 0;
-    }
-    result.push_back(leftmost);
+    vector<Point2D> resultUp, resultDown;
+    resultUp.push_back(leftmost);
 
     for (auto point = points.begin() + 1; point != points.end(); ++point) {
         if (point == points.end() - 1 || clockwise(leftmost, *point, rightmost)) {
-            if (upPrev == points.end()) {
-                upPrev = point;
-            } else if (clockwise(*upPPrev, *upPrev, *point)) {
-                if (s) {
-                    *s += square(*upPPrev, *upPrev, *point);
-                }
+            if (upPrev != points.end() && clockwise(*upPPrev, *upPrev, *point)) {
                 upPPrev = upPrev;
-                result.push_back(*upPrev);
-                upPrev = point;
-            } else {
+                resultUp.push_back(*upPrev);
                 upPrev = point;
             }
+            upPrev = point;
         }
         if (point == points.end() - 1 || !clockwise(leftmost, *point, rightmost)) {
-            if (downPrev == points.end()) {
-                downPrev = point;
-            } else if (!clockwise(*downPPrev, *downPrev, *point)) {
-                if (s) {
-                    *s += square(*downPPrev, *downPrev, *point);
-                }
+            if (downPrev != points.end() && !clockwise(*downPPrev, *downPrev, *point)) {
                 downPPrev = downPrev;
-                result.push_back(*downPrev);
-                downPrev = point;
-            } else {
+                resultDown.push_back(*downPrev);
                 downPrev = point;
             }
+            downPrev = point;
         }
     }
-    result.push_back(rightmost);
+    resultDown.push_back(rightmost);
+    resultUp.insert(resultUp.end(), resultDown.rbegin(), resultDown.rend());
 
-    return result;
+    return resultUp;
 }
 
 

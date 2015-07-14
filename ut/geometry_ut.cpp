@@ -45,12 +45,11 @@ TEST(geometry, convex_hull) {
 TEST(geometry, point_inside) {
     // square
     std::vector<Point2D> square;
-    square.push_back(Point2D{ 1, -1 });
-    square.push_back(Point2D{ 1, 1 });
-    square.push_back(Point2D{ -1, 1 });
     square.push_back(Point2D{ -1, -1 });
+    square.push_back(Point2D{ -1, 1 });
+    square.push_back(Point2D{ 1, 1 });
+    square.push_back(Point2D{ 1, -1 });
 
-/*
     EXPECT_TRUE(pointInsidePolygon(Point2D{0, 0}, square));
     EXPECT_TRUE(pointInsidePolygon(Point2D{0.5, 0.3}, square));
     EXPECT_TRUE(pointInsidePolygon(Point2D{-0.5, -0.3}, square));
@@ -59,11 +58,8 @@ TEST(geometry, point_inside) {
 
     EXPECT_FALSE(pointInsidePolygon(Point2D{2, 0}, square));
     EXPECT_FALSE(pointInsidePolygon(Point2D{2.5, 0.3}, square));
-*/
 
     EXPECT_FALSE(pointInsidePolygon(Point2D{-0.5, -2.3}, square));
     EXPECT_FALSE(pointInsidePolygon(Point2D{-0.5, 1.3}, square));
-/*
     EXPECT_FALSE(pointInsidePolygon(Point2D{5.5, -0.3}, square));
-*/
 }

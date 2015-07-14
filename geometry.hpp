@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <math.h>
+#include <iostream>
 
 namespace algorithms {
 
@@ -28,6 +29,9 @@ static inline double square(Point2D a, Point2D b, Point2D c) {
 }
 
 static inline bool clockwise(Point2D a, Point2D b, Point2D c) {
+    std::cerr << "cloclwise " << a.x << " " << a.y << " " <<
+                            b.x << " " << b.y << " " <<
+                            c.x << " " << c.y << "\n";
     return wedgeProduct(a, b, c) < 0;
 }
 
@@ -40,15 +44,15 @@ static inline double getAngle(Point2D a, Point2D b, Point2D c) {
     double b_len2 = sqr(a.x - c.x) + sqr(a.y - c.y);
     double c_len2 = sqr(b.x - a.x) + sqr(b.y - a.y);
 
-    double cosalpha = (c_len2 + a_len2 - b_len2) / (2 * sqrt(c_len2) * sqrt(a_len2));
+    double cos_alpha = (c_len2 + a_len2 - b_len2) / (2 * sqrt(c_len2) * sqrt(a_len2));
 
-    return acos(cosalpha);
+    return acos(cos_alpha);
 }
 
 // Returns convex hull of polygom
 // Graham-Andrew
 // Returns iterator of new sequence end (like std::unique does)
-std::vector<Point2D> convexHull(std::vector<Point2D> points, double* square = nullptr);
+std::vector<Point2D> convexHull(std::vector<Point2D> points);
 
 bool pointInsidePolygon(Point2D point, const std::vector<Point2D>& polygon);
 } // namespace algorithms
