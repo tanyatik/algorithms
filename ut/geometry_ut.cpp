@@ -4,23 +4,21 @@
 
 using algorithms::Point2D;
 
-TEST(geometry, convex_hull) {
+TEST(geometry, convex_hull_small_square) {
     // square
     std::vector<Point2D> square;
 
-    square.push_back(Point2D{ -1, -1 });
-    square.push_back(Point2D{ -1, 1 });
     square.push_back(Point2D{ 1, -1 });
     square.push_back(Point2D{ 1, 1 });
+    square.push_back(Point2D{ -1, 1 });
+    square.push_back(Point2D{ -1, -1 });
 
-    double s;
-    std::vector<Point2D> convex = convexHull(square, &s);
+    std::vector<Point2D> convex = convexHull(square);
     EXPECT_EQ(convex.size(), square.size());
     EXPECT_EQ(convex[0], square[0]);
     EXPECT_EQ(convex[1], square[1]);
     EXPECT_EQ(convex[2], square[2]);
     EXPECT_EQ(convex[3], square[3]);
-    EXPECT_NEAR(4, s, 0.01);
 
     // strange non-convex figure
     std::vector<Point2D> nonConvexFigure;
@@ -30,16 +28,34 @@ TEST(geometry, convex_hull) {
     nonConvexFigure.push_back(Point2D{ 1, -1 });
     nonConvexFigure.push_back(Point2D{ 1, 1 });
 
-    // should become same square
-    s = 0;
-    convex = convexHull(nonConvexFigure, &s);
+    convex = convexHull(nonConvexFigure);
 
     EXPECT_EQ(convex.size(), square.size());
     EXPECT_EQ(convex[0], square[0]);
     EXPECT_EQ(convex[1], square[1]);
     EXPECT_EQ(convex[2], square[2]);
     EXPECT_EQ(convex[3], square[3]);
-    EXPECT_NEAR(4, s, 0.01);
+}
+
+TEST(geometry, convex_hull_repeating_points) {
+    // square
+    std::vector<Point2D> square;
+
+    square.push_back(Point2D{ 2, 0 });
+    square.push_back(Point2D{ 0, 0 });
+    square.push_back(Point2D{ 2, 1 });
+    square.push_back(Point2D{ 0, 1 });
+    square.push_back(Point2D{ 1, 2 });
+    square.push_back(Point2D{ 1, 0 });
+    square.push_back(Point2D{ 2, 2 });
+    square.push_back(Point2D{ 0, 2 });
+
+    std::vector<Point2D> convex = convexHull(square);
+    EXPECT_EQ(convex.size(), 4);
+    EXPECT_EQ((Point2D{ 0, 0 }), convex[0]);
+    EXPECT_EQ((Point2D{ 2, 0 }), convex[1]);
+    EXPECT_EQ((Point2D{ 2, 2 }), convex[2]);
+    EXPECT_EQ((Point2D{ 0, 2 }), convex[3]);
 }
 
 TEST(geometry, point_inside) {

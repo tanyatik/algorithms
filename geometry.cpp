@@ -35,11 +35,6 @@ bool pointInsidePolygon(Point2D point, const std::vector<Point2D>& polygon) {
     return false;
 }
 
-static inline double square(Point2D a, Point2D b, Point2D c) {
-    double s = fabs(wedgeProduct(a, b, c)) / 2.0;
-    return s;
-}
-
 static inline double signedSquare(Point2D a, Point2D b, Point2D c) {
     double s = wedgeProduct(a, b, c) / 2.0;
     return s;
@@ -91,8 +86,7 @@ std::vector<Point2D> convexHull(std::vector<Point2D> points) {
                 upPrev = point;
             }
             upPrev = point;
-        }
-        if (point == points.end() - 1 || !clockwise(leftmost, *point, rightmost)) {
+        } else if (point == points.end() - 1 || !clockwise(leftmost, *point, rightmost)) {
             if (downPrev != points.end() && !clockwise(*downPPrev, *downPrev, *point)) {
                 downPPrev = downPrev;
                 resultDown.push_back(*downPrev);
@@ -102,9 +96,9 @@ std::vector<Point2D> convexHull(std::vector<Point2D> points) {
         }
     }
     resultDown.push_back(rightmost);
-    resultUp.insert(resultUp.end(), resultDown.rbegin(), resultDown.rend());
+    resultDown.insert(resultDown.end(), resultUp.rbegin(), resultUp.rend());
 
-    return resultUp;
+    return resultDown;
 }
 
 
