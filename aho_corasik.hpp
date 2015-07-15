@@ -33,87 +33,87 @@ public:
         }
     };
 
-    void addValue(Node node, TValue value) {
+    void AddValue(Node node, TValue value) {
         nodes_[node].value_.push_back(value);
     }
 
-    bool hasValue(Node node) const {
+    bool HasValue(Node node) const {
         return nodes_[node].value_.size() != 0;
     }
 
-    const Value &getValue(Node node) {
+    const Value &GetValue(Node node) {
         return nodes_[node].value_;
     }
 
-    bool hasTransition(Node node, char symbol) const { 
+    bool HasTransition(Node node, char symbol) const { 
         const auto &transitions = nodes_[node].transitions_;
 
         return transitions.at(symbol - MIN_SYMBOL) != NO_TRANSITION;
     }
 
-    const Node getTransition(Node node, char symbol) const {
+    const Node GetTransition(Node node, char symbol) const {
         return nodes_[node].transitions_.at(symbol - MIN_SYMBOL);
     }
 
-    void addTransition(Node node, char symbol, Node transition) {
+    void AddTransition(Node node, char symbol, Node transition) {
         nodes_[node].transitions_[symbol - MIN_SYMBOL] = transition;
     }
 
     Trie() :
         nodes_(),
-        root_(createEmptyNode()),
+        root_(CreateEmptyNode()),
         keys_counter_(0)
         {}
 
-    Node createEmptyNode() {
+    Node CreateEmptyNode() {
         nodes_.emplace_back(NodeContent());
         return nodes_.size() - 1;
     }
 
-    bool isRoot(Node node) const {
+    bool IsRoot(Node node) const {
         return node == root_;  
     }
 
-    Node getRoot() const {
+    Node GetRoot() const {
         return root_;
     }
 
-    size_t getNodesCount() const {
+    size_t GetNodesCount() const {
         return nodes_.size();
     }
 
-    void addKey(const std::string &key, const TValue &value) {
+    void AddKey(const std::string &key, const TValue &value) {
         Node current_node = root_;
         auto current_symbol = key.begin();
  
         while (current_symbol != key.end() &&
-               hasTransition(current_node, *current_symbol)) {
-            current_node = getTransition(current_node, *current_symbol);
+               HasTransition(current_node, *current_symbol)) {
+            current_node = GetTransition(current_node, *current_symbol);
             ++current_symbol;
         }
    
         while (current_symbol != key.end()) {
-            addTransition(current_node, *current_symbol, createEmptyNode());
-            current_node = getTransition(current_node, *current_symbol);
+            AddTransition(current_node, *current_symbol, CreateEmptyNode());
+            current_node = GetTransition(current_node, *current_symbol);
             ++current_symbol;
         }
         
         if (current_symbol == key.end()) {
-            addValue(current_node, value);
+            AddValue(current_node, value);
         }
     }
 
-    bool hasKey(const std::string &key) const {
+    bool HasKey(const std::string &key) const {
         Node current_node = root_;
         auto current_symbol = key.begin();        
 
         while (current_symbol != key.end() &&
-               hasTransition(current_node, *current_symbol)) {
-            current_node = getTransition(current_node, *current_symbol);
+               HasTransition(current_node, *current_symbol)) {
+            current_node = GetTransition(current_node, *current_symbol);
             ++current_symbol;
         }
     
-        return (current_symbol == key.end() && hasValue(current_node));
+        return (current_symbol == key.end() && HasValue(current_node));
     }
 
 private:
@@ -131,19 +131,19 @@ protected:
 
 public:
 
-    std::vector<std::vector<size_t>> searchPatterns(std::string string) const {
+    std::vector<std::vector<size_t>> SearchPatterns(std::string string) const {
         std::vector<std::vector<size_t>> matches(pattern_count_);
-        PatternTrie::Node node = trie_.getRoot();
+        PatternTrie::Node node = trie_.GetRoot();
 
         for (size_t index = 0; index < string.size(); ++index) {
             char symbol = string[index];
-            while (getGotoTransition(node, symbol) == PatternTrie::NO_TRANSITION) {
-                node = getFailTransition(node);
+            while (GetGotoTransition(node, symbol) == PatternTrie::NO_TRANSITION) {
+                node = GetFailTransition(node);
             }
 
-            node = getGotoTransition(node, symbol);
+            node = GetGotoTransition(node, symbol);
 
-            for (auto match: getPatternMatches(node)) {
+            for (auto match: GetPatternMatches(node)) {
                 matches[match].push_back(index);
             }
         }
@@ -151,51 +151,51 @@ public:
         return std::move(matches);
     }
 
-    void init(std::vector<std::string> patterns) {
+    void Init(std::vector<std::string> patterns) {
         pattern_count_ = patterns.size();
-        initTrie(patterns);
+        InitTrie(patterns);
 
-        fail_transitions_.resize(trie_.getNodesCount());
-        pattern_matches_.resize(trie_.getNodesCount());
+        fail_transitions_.resize(trie_.GetNodesCount());
+        pattern_matches_.resize(trie_.GetNodesCount());
 
         std::fill(fail_transitions_.begin(), fail_transitions_.end(), PatternTrie::NO_TRANSITION);
 
-        initAutomata(); 
+        InitAutomata(); 
     }
 
 protected:
-    PatternTrie::Node getTransition(PatternTrie::Node node, char symbol) const {
-        if (getGotoTransition(node, symbol) == PatternTrie::NO_TRANSITION) {
-            while (getGotoTransition(node, symbol) == PatternTrie::NO_TRANSITION) {
-                node = getFailTransition(node);
+    PatternTrie::Node GetTransition(PatternTrie::Node node, char symbol) const {
+        if (GetGotoTransition(node, symbol) == PatternTrie::NO_TRANSITION) {
+            while (GetGotoTransition(node, symbol) == PatternTrie::NO_TRANSITION) {
+                node = GetFailTransition(node);
             }
 
-            node = getGotoTransition(node, symbol);
+            node = GetGotoTransition(node, symbol);
             return node;
         } else {
-            return getGotoTransition(node, symbol);
+            return GetGotoTransition(node, symbol);
         }
     }
 
 private: 
-    void initTrie(const std::vector<std::string> &patterns) {
+    void InitTrie(const std::vector<std::string> &patterns) {
         for (size_t pattern_index = 0; pattern_index < patterns.size(); ++pattern_index) {
-            trie_.addKey(patterns[pattern_index], pattern_index);
+            trie_.AddKey(patterns[pattern_index], pattern_index);
         }
     }
 
-    void initAutomata() {
+    void InitAutomata() {
         std::queue<PatternTrie::Node> queue;
-        auto root = trie_.getRoot();
+        auto root = trie_.GetRoot();
         fail_transitions_[root] = root;
-        addPatternMatches(root, std::vector<size_t>()); // in case there are empty patterns
+        AddPatternMatches(root, std::vector<size_t>()); // in case there are empty patterns
 
         for (size_t symbol = PatternTrie::MIN_SYMBOL; symbol < PatternTrie::MAX_SYMBOL; ++symbol) {
-            if (trie_.hasTransition(trie_.getRoot(), symbol)) {
-                auto node = trie_.getTransition(trie_.getRoot(), symbol);
+            if (trie_.HasTransition(trie_.GetRoot(), symbol)) {
+                auto node = trie_.GetTransition(trie_.GetRoot(), symbol);
     
                 fail_transitions_[node] = root;
-                addPatternMatches(node, getPatternMatches(root));
+                AddPatternMatches(node, GetPatternMatches(root));
 
                 queue.push(node);
             }
@@ -205,49 +205,52 @@ private:
             auto current_node = queue.front();
             queue.pop();
             
-            for (size_t symbol = PatternTrie::MIN_SYMBOL; symbol != PatternTrie::MAX_SYMBOL; ++symbol) {
-                if (trie_.hasTransition(current_node, symbol)) {
-                    auto transition_from = trie_.getTransition(current_node, symbol);
+            for (size_t symbol = PatternTrie::MIN_SYMBOL; 
+                    symbol != PatternTrie::MAX_SYMBOL; 
+                    ++symbol) {
+                if (trie_.HasTransition(current_node, symbol)) {
+                    auto transition_from = trie_.GetTransition(current_node, symbol);
 
                     queue.push(transition_from);
-                    auto transition_to = getFailTransition(current_node);
+                    auto transition_to = GetFailTransition(current_node);
 
-                    while (getGotoTransition(transition_to, symbol) == PatternTrie::NO_TRANSITION) {
-                        transition_to = getFailTransition(transition_to);
+                    while (GetGotoTransition(transition_to, symbol) == PatternTrie::NO_TRANSITION) {
+                        transition_to = GetFailTransition(transition_to);
                     }
 
-                    fail_transitions_[transition_from] = getGotoTransition(transition_to, symbol);
-                    addPatternMatches(transition_from, 
-                            getPatternMatches(fail_transitions_[transition_from]));
+                    fail_transitions_[transition_from] = GetGotoTransition(transition_to, symbol);
+                    AddPatternMatches(transition_from, 
+                            GetPatternMatches(fail_transitions_[transition_from]));
                 }
             }
         }
     }
 
-    void addPatternMatches(PatternTrie::Node node, const std::vector<size_t> &implicit_matches) {
+    void AddPatternMatches(PatternTrie::Node node, const std::vector<size_t> &implicit_matches) {
         std::vector<size_t> matches = implicit_matches;
 
-        if (trie_.hasValue(node)) {
-            const auto &values = trie_.getValue(node);
+        if (trie_.HasValue(node)) {
+            const auto &values = trie_.GetValue(node);
             matches.insert(matches.begin(), values.begin(), values.end());
         }
 
         pattern_matches_[node] = matches;
     } 
 
-protected: PatternTrie::Node getRoot() const {
-        return trie_.getRoot();
+protected: 
+    PatternTrie::Node GetRoot() const {
+        return trie_.GetRoot();
     }
 
-    bool isTerminalState(PatternTrie::Node node) const {
+    bool IsTerminalState(PatternTrie::Node node) const {
         return (pattern_matches_.at(node).size() > 0);
     }
 
-    PatternTrie::Node getGotoTransition(PatternTrie::Node node, char symbol) const {
-        if (trie_.hasTransition(node, symbol)) {
-            return trie_.getTransition(node, symbol);
+    PatternTrie::Node GetGotoTransition(PatternTrie::Node node, char symbol) const {
+        if (trie_.HasTransition(node, symbol)) {
+            return trie_.GetTransition(node, symbol);
         } else {
-            if (trie_.isRoot(node)) {
+            if (trie_.IsRoot(node)) {
                 return node;
             } else {
                 return PatternTrie::NO_TRANSITION;   
@@ -255,20 +258,20 @@ protected: PatternTrie::Node getRoot() const {
         }
     }
 
-    PatternTrie::Node getFailTransition(PatternTrie::Node node) const {
+    PatternTrie::Node GetFailTransition(PatternTrie::Node node) const {
         if (fail_transitions_.at(node) != PatternTrie::NO_TRANSITION) {
             return fail_transitions_.at(node);
         } else {
-            return trie_.getRoot();
+            return trie_.GetRoot();
         }
     }
 
-    std::vector<size_t> getPatternMatches(PatternTrie::Node node) const {
+    std::vector<size_t> GetPatternMatches(PatternTrie::Node node) const {
         return pattern_matches_.at(node);
     }
 
-    size_t getNodesCount() const {
-        return trie_.getNodesCount();
+    size_t GetNodesCount() const {
+        return trie_.GetNodesCount();
     }
 
 private:
@@ -287,14 +290,14 @@ private:
 public:
     static const int MODULUS = 1000000007;
 
-    long long int countExcludedStrings(size_t max_word_length, 
+    long long int CountExcludedStrings(size_t max_word_length, 
             size_t alphabet_size) {
         DynamicTable table(max_word_length + 1);
          
-        size_t nodes_count = getNodesCount();
+        size_t nodes_count = GetNodesCount();
         
         for (size_t node = 0; node < nodes_count; ++node) {
-            if (isTerminalState(node)) {
+            if (IsTerminalState(node)) {
                 for (size_t word_length = 0; word_length <= max_word_length; ++word_length) {
                     table[word_length][node] = 0;
                 }
@@ -305,11 +308,11 @@ public:
 
         for (size_t word_length = 1; word_length <= max_word_length; ++word_length) {
             for (size_t node = 0; node < nodes_count; ++node) {
-                if (!isTerminalState(node)) {
+                if (!IsTerminalState(node)) {
                     long long int result = 0;
 
                     for (char symbol_index = 0; symbol_index < alphabet_size; ++symbol_index) {
-                        result += table[word_length - 1][getTransition(node, 'a' + symbol_index)];
+                        result += table[word_length - 1][GetTransition(node, 'a' + symbol_index)];
                         result %= MODULUS;
                     }
 
@@ -318,6 +321,6 @@ public:
             } 
         }
 
-        return table[max_word_length][getRoot()];
+        return table[max_word_length][GetRoot()];
     }
 };

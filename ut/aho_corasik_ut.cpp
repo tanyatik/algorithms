@@ -7,42 +7,42 @@ using namespace std::placeholders;
 TEST(aho_corasik, trie_fill) {
     Trie<int> trie;
 
-    trie.addKey("abc", 1);
-    trie.addKey("def", 2);
+    trie.AddKey("abc", 1);
+    trie.AddKey("def", 2);
 
-    EXPECT_TRUE(trie.hasKey("abc"));
-    EXPECT_TRUE(trie.hasKey("def"));
+    EXPECT_TRUE(trie.HasKey("abc"));
+    EXPECT_TRUE(trie.HasKey("def"));
 
-    EXPECT_FALSE(trie.hasKey("abd"));
-    EXPECT_FALSE(trie.hasKey("ab"));
-    EXPECT_FALSE(trie.hasKey("abcd"));
+    EXPECT_FALSE(trie.HasKey("abd"));
+    EXPECT_FALSE(trie.HasKey("ab"));
+    EXPECT_FALSE(trie.HasKey("abcd"));
     
-    trie.addKey("ab", 3);
-    trie.addKey("deg", 4);
-    trie.addKey("degh", 5);
+    trie.AddKey("ab", 3);
+    trie.AddKey("deg", 4);
+    trie.AddKey("degh", 5);
      
-    EXPECT_TRUE(trie.hasKey("abc"));
-    EXPECT_TRUE(trie.hasKey("ab"));
-    EXPECT_TRUE(trie.hasKey("def"));
-    EXPECT_TRUE(trie.hasKey("deg"));
-    EXPECT_TRUE(trie.hasKey("degh"));
+    EXPECT_TRUE(trie.HasKey("abc"));
+    EXPECT_TRUE(trie.HasKey("ab"));
+    EXPECT_TRUE(trie.HasKey("def"));
+    EXPECT_TRUE(trie.HasKey("deg"));
+    EXPECT_TRUE(trie.HasKey("degh"));
 
-    EXPECT_FALSE(trie.hasKey("abd"));
-    EXPECT_FALSE(trie.hasKey("abcd"));
-    EXPECT_FALSE(trie.hasKey("de"));
+    EXPECT_FALSE(trie.HasKey("abd"));
+    EXPECT_FALSE(trie.HasKey("abcd"));
+    EXPECT_FALSE(trie.HasKey("de"));
 }
 
 TEST(aho_corasik, empty_trie_fill) {
     Trie<int> trie;
-    trie.addKey("", 1);
+    trie.AddKey("", 1);
 
-    EXPECT_TRUE(trie.hasKey(""));
-    EXPECT_FALSE(trie.hasKey("notintrie"));
+    EXPECT_TRUE(trie.HasKey(""));
+    EXPECT_FALSE(trie.HasKey("notintrie"));
 }
 
 typedef std::map<std::string, std::set<size_t>> ExpectedMap;
 
-ExpectedMap getResultMap(const std::vector<std::vector<size_t>> &result,
+ExpectedMap GetResultMap(const std::vector<std::vector<size_t>> &result,
         const std::vector<std::string> patterns) {
     ExpectedMap result_map;
 
@@ -50,17 +50,17 @@ ExpectedMap getResultMap(const std::vector<std::vector<size_t>> &result,
     for (size_t result_index = 0; result_index < result.size(); ++result_index) {
         const auto &matches = result[result_index];
         if (!matches.empty()) {
-            result_map[patterns[result_index]].insert(matches.begin(), matches.end());
+            result_map[patterns[result_index]].Insert(matches.begin(), matches.end());
         }
     }
 
     return std::move(result_map);
 }
 
-void checkMap(ExpectedMap expected, 
+void CheckMap(ExpectedMap expected, 
         std::vector<std::vector<size_t>> result_matches, 
         const std::vector<std::string> patterns) {
-    ExpectedMap result = getResultMap(result_matches, patterns);
+    ExpectedMap result = GetResultMap(result_matches, patterns);
 
     EXPECT_EQ(expected.size(), result.size()) << "not all matches found";
     for (auto match: expected) {
@@ -78,29 +78,29 @@ void checkMap(ExpectedMap expected,
     }
 }
 
-void checkPatternsMatching(const std::string &text, 
+void CheckPatternsMatching(const std::string &text, 
         const std::vector<std::string> &patterns,
         ExpectedMap expected_map) {
     PatternsMatcher matcher;
-    matcher.init(patterns);
+    matcher.Init(patterns);
 
-    auto found_map = matcher.searchPatterns(text);
-    checkMap(expected_map, found_map, patterns);
+    auto found_map = matcher.SearchPatterns(text);
+    CheckMap(expected_map, found_map, patterns);
 }
 
 TEST(aho_corasik, empty_pattern_matcher_fill) {
-    checkPatternsMatching("ababba", {"", "a"}, {{"a", {0, 2, 5}}, {"", {0, 1, 2, 3, 4, 5}}});
+    CheckPatternsMatching("ababba", {"", "a"}, {{"a", {0, 2, 5}}, {"", {0, 1, 2, 3, 4, 5}}});
 }
 
 TEST(aho_corasik, single_pattern_matcher_fill) {
-    checkPatternsMatching("aba", {"ab"}, {{"ab", {1}}});
+    CheckPatternsMatching("aba", {"ab"}, {{"ab", {1}}});
 }
 
 TEST(aho_corasik, overlapping_pattern_matcher_fill) {
-    checkPatternsMatching("herhehis", 
+    CheckPatternsMatching("herhehis", 
         {"he", "she", "his", "her"}, 
         {{"his", {7}}, {"he", {1, 4}}, {"her", {2}}});
-    checkPatternsMatching("hipsher",
+    CheckPatternsMatching("hipsher",
         {"he", "she", "i", "ip", "ips", "hips", "her", "h"},
         {{"h",    {0, 4}}, 
          {"i",    {1}}, 
@@ -113,7 +113,7 @@ TEST(aho_corasik, overlapping_pattern_matcher_fill) {
 }
 
 TEST(aho_corasik, long_string_matcher_fill) {
-    checkPatternsMatching("abcdcbcddbbbcccbbbcccbb", 
+    CheckPatternsMatching("abcdcbcddbbbcccbbbcccbb", 
         {"abc", "bcdc", "bcdd", "bbbc", "cccb"},
         {{"abc",  {2}}, 
          {"bcdc", {4}}, 
@@ -124,28 +124,28 @@ TEST(aho_corasik, long_string_matcher_fill) {
 
 TEST(word_counter, with_2_letters_of_length_5_except_a) {
     StringsCounter counter;
-    counter.init({"a"});
+    counter.Init({"a"});
 
-    EXPECT_EQ(1, counter.countExcludedStrings(5, 2));
+    EXPECT_EQ(1, counter.CountExcludedStrings(5, 2));
 }
 
 TEST(word_counter, with_1_letter_of_length_5_except_a_aa) {
     StringsCounter counter;
-    counter.init({"a", "aa"});
+    counter.Init({"a", "aa"});
 
-    EXPECT_EQ(0, counter.countExcludedStrings(5, 1));
+    EXPECT_EQ(0, counter.CountExcludedStrings(5, 1));
 }
 
 TEST(word_counter, with_2_letters_of_length_5_except_ab) {
     StringsCounter counter;
-    counter.init({"ab"});
+    counter.Init({"ab"});
 
-    EXPECT_EQ(6, counter.countExcludedStrings(5, 2));
+    EXPECT_EQ(6, counter.CountExcludedStrings(5, 2));
 }
 
 TEST(word_counter, with_2_letters_of_length_5) {
     StringsCounter counter;
-    counter.init({});
+    counter.Init({});
 
-    EXPECT_EQ(32, counter.countExcludedStrings(5, 2));
+    EXPECT_EQ(32, counter.CountExcludedStrings(5, 2));
 }
