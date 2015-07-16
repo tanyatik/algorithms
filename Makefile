@@ -38,5 +38,13 @@ clean:
 	@rm -f ./*.o ut/*_ut.o
 	@rm -f ./deps/*.d
 
+run_tests:
+	./bin/hash_ut
+	./bin/heap_ut
+	./bin/sort_ut
+	./bin/string_ut
+	./bin/tree_ut
+	./bin/math_ut
+
 -include deps/*.d
 
