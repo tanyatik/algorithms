@@ -228,4 +228,54 @@ void QuickSort(TIter input_begin, TIter input_end, F comp) {
     // assert(std::is_sorted(input_begin, input_end));
 }
 
+// Given 3 values,
+// sorts them in ascending order.
+template<typename TValue>
+void Sort3(TValue& a, TValue& b, TValue& c) {
+    TValue t_a = a;
+    TValue t_b = b;
+    TValue t_c = c;
+
+    using std::swap;
+
+    if (a <= b && a <= c) {
+        if (b <= c) {
+            // a, b, c
+            a = t_a;
+            b = t_b;
+            c = t_c;
+        } else {
+            // a, c, b
+            a = t_a;
+            b = t_c;
+            c = t_b;
+        }
+    } else if (b <= a && b <= c) {
+        if (a <= c) {
+            // b, a, c
+            a = t_b;
+            b = t_a;
+            c = t_c;
+        } else {
+            // b, c, a
+            a = t_b;
+            b = t_c;
+            c = t_a;
+        }
+    } else {
+        if (a <= b) {
+            // c, a, b
+            a = t_c;
+            b = t_a;
+            c = t_b;
+        } else {
+            // c, b, a
+            a = t_c;
+            b = t_b;
+            c = t_a;
+        }
+    }
+}
+
+
 } // namespace algorithms
