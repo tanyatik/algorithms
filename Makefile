@@ -7,12 +7,15 @@ CXXFLAGS+=-I. -isystem ./contrib/gmock
 LDFLAGS=
 LDLIBS=-lpthread -lglog
 
-# OBJS=$(filter-out cpp/%_main.o,$(patsubst %.cpp,%.o,$(wildcard cpp/*.cpp)))
 GTEST_OBJS=contrib/gmock/gmock-gtest-all.o contrib/gmock/gmock_main.o
-
 UT_OBJS=$(patsubst %.cpp,%.o,$(wildcard *_ut.cpp))
 
-SECTIONS=string heap
+LSECTIONS=string
+HSECTIONS=heap tree
+
+SECTIONS=$(LSECTIONS) $(HSECTIONS)
+
+LOBJS=$(foreach dir,$(LSECTIONS),$(patsubst %.cpp,%.o,$(wildcard $(dir)/*.cpp)))
 
 TESTS=$(patsubst %,%_ut,$(SECTIONS))
 UT_BINS=$(patsubst %,bin/%,$(TESTS))
@@ -22,7 +25,7 @@ BINS=$(UT_BINS)
 COMPILE_RULE=$(CC) $(CXXWARN) $(CXXFLAGS) $< -c -o $@ -MP -MMD -MF deps/$(subst /,-,$@).d
 LINK_RULE=$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
-bin/%: ut/%.o $(GTEST_OBJS)
+bin/%: ut/%.o $(GTEST_OBJS) $(LOBJS)
 	$(LINK_RULE)
 
 %.o: %.cpp
