@@ -2,10 +2,10 @@
 #include <vector>
 #include <string>
 
-namespace tanyatik {
+namespace algorithms {
 
 // Computes prefix function for string s
-inline std::vector<size_t> computePrefix(const std::string &string) {
+inline std::vector<size_t> ComputePrefix(const std::string &string) {
     std::vector<size_t> prefix(string.size(), 0);
 
     prefix[0] = 0;
@@ -27,25 +27,25 @@ inline std::vector<size_t> computePrefix(const std::string &string) {
             }
         }
     }
-    
+
     return std::move(prefix);
 }
 
-inline std::vector<size_t> computeZFunction(std::string::const_iterator begin, 
+inline std::vector<size_t> ComputeZFunction(std::string::const_iterator begin,
         std::string::const_iterator end) {
     size_t size = std::distance(begin, end);
-    
+
     std::vector<size_t> z_function(size, 0);
-    
+
     z_function[0] = size;
     size_t most_right_match_begin = 0;
     size_t most_right_match_end = 0;
 
     for (size_t index = 1; index < size; ++index) {
         if (most_right_match_end > index) {
-            z_function[index] = std::min(z_function[index - most_right_match_begin], 
+            z_function[index] = std::min(z_function[index - most_right_match_begin],
                 most_right_match_end - index);
-        }    
+        }
 
         size_t index_left = z_function[index];
         size_t index_right = index + z_function[index];
@@ -61,44 +61,12 @@ inline std::vector<size_t> computeZFunction(std::string::const_iterator begin,
             most_right_match_end = index + z_function[index];
         }
     }
-    
+
     return std::move(z_function);
 }
 
-inline std::vector<size_t> computeZFunction(const std::string &string) {
-    return computeZFunction(string.begin(), string.end());
+inline std::vector<size_t> ComputeZFunction(const std::string &string) {
+    return ComputeZFunction(string.begin(), string.end());
 }
 
-/*
-inline std::vector<size_t> computeZFunction(const std::string &string) {
-    std::vector<size_t> z_function(string.size(), 0);
-    
-    z_function[0] = string.size();
-    size_t most_right_match_begin = 0;
-    size_t most_right_match_end = 0;
-
-    for (size_t index = 1; index < string.size(); ++index) {
-        if (most_right_match_end > index) {
-            z_function[index] = std::min(z_function[index - most_right_match_begin], 
-                most_right_match_end - index);
-        }    
-
-        size_t index_left = z_function[index];
-        size_t index_right = index + z_function[index];
-
-        while (index_right < string.size() && string[index_left] == string[index_right]) {
-            z_function[index]++;
-            index_left++;
-            index_right++;
-        }
-
-        if (z_function[index] > 0 && index + z_function[index] > most_right_match_end) {
-            most_right_match_begin = index;
-            most_right_match_end = index + z_function[index];
-        }
-    }
-    
-    return std::move(z_function);
-}
-*/
-} // namespace tanyatik
+} // namespace algorithms
