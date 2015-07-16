@@ -1,3 +1,5 @@
+deps/
+*.o
 *.swp
 *.swo
 *.dSYM/
