@@ -12,7 +12,9 @@ GTEST_OBJS=contrib/gmock/gmock-gtest-all.o contrib/gmock/gmock_main.o
 
 UT_OBJS=$(patsubst %.cpp,%.o,$(wildcard *_ut.cpp))
 
-TESTS=string_ut heap_ut
+SECTIONS=string heap
+
+TESTS=$(patsubst %,%_ut,$(SECTIONS))
 UT_BINS=$(patsubst %,bin/%,$(TESTS))
 
 BINS=$(UT_BINS)
