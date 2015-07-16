@@ -1,8 +1,6 @@
 #include <algorithm>
 #include <vector>
 
-namespace detail {
-
 // Returns position of median in sequence [begin, end)
 // Does not modify source sequence
 template<typename I, typename T = typename I::value_type, typename C = std::less<T>>
@@ -15,13 +13,13 @@ I MedianNaive(I begin, I end, C comparator = C()) {
     for (I iterator = begin; iterator != end; ++iterator) {
         if (*iterator== elements[median_index]) {
             return iterator;
-        } 
+        }
     }
     assert(!"Unreachable code");
     return begin;
 }
 
-// Makes a table of elements in sequence [begin, end) 
+// Makes a table of elements in sequence [begin, end)
 // Table has rows_number rows and size / rows_number columns
 // Remaining elements are filled woth std::numeric_limits<T>::max
 template<typename I, typename T = typename I::value_type>
@@ -47,7 +45,7 @@ std::vector<std::vector<T>> FillTable(I begin, I end, size_t rows_number) {
         }
     }
     return table;
-}    
+}
 
 // Returns position of median of medians in sequence [begin, end)
 // Does not modify source sequence
@@ -76,12 +74,10 @@ I ApproximateMedianMedianPivot(I begin, I end, C comparator = C()) {
     return begin + (median_index * ROWS_NUMBER + ROWS_NUMBER / 2);
 }
 
-} // namespace detail
-
 // Reorders sequence [begin, end) in such way
 // that elements <= pivot are before pivot,
-// and elements > pivot are after pivot in sequence 
-template<typename I, typename C = std::less<typename I::value_type>> 
+// and elements > pivot are after pivot in sequence
+template<typename I, typename C = std::less<typename I::value_type>>
 I Partition(I begin, I end, I pivot_iterator, C comparator = C()) {
     auto pivot = *pivot_iterator;
     std::swap(*begin, *pivot_iterator);
@@ -121,19 +117,19 @@ template<typename I, typename T = typename I::value_type, typename C = std::less
 T OrderStatistics(I input_begin, I input_end, int order, C comparator = C()) {
     std::vector<T> sequence(input_begin, input_end);
     auto begin = sequence.begin();
-    auto end = sequence.end(); 
+    auto end = sequence.end();
 
-    size_t elements_number = std::distance(begin, end); 
+    size_t elements_number = std::distance(begin, end);
     assert(elements_number >= order);
 
     if (elements_number == 1 && order == 0) {
         return *begin;
     }
 
-    auto pivot_iterator = ApproximateMedianMedianPivot(begin, end, comparator); 
-    
-    pivot_iterator = Partition(begin, end, pivot_iterator, comparator); 
-    size_t pivot_position = std::distance(begin, pivot_iterator); 
+    auto pivot_iterator = ApproximateMedianMedianPivot(begin, end, comparator);
+
+    pivot_iterator = Partition(begin, end, pivot_iterator, comparator);
+    size_t pivot_position = std::distance(begin, pivot_iterator);
 
     if (order == pivot_position) {
         return *pivot_iterator;
@@ -144,10 +140,10 @@ T OrderStatistics(I input_begin, I input_end, int order, C comparator = C()) {
     }
 }
 
-// Order is indexed in [0, V.size()) 
+// Order is indexed in [0, V.size())
 template<typename V, typename C = std::less<typename V::value_type>>
-typename V::value_type OrderStatistics(const V &container, 
-        int order, 
+typename V::value_type OrderStatistics(const V &container,
+        int order,
         C comparator = C()) {
     return OrderStatistics(container.begin(), container.end(), order, comparator);
 }
