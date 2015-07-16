@@ -9,80 +9,83 @@ struct TraitsSentinel;
 
 template<typename TElem>
 class BinarySearchTree {
+public:
+    BinarySearchTree();
+    void initPreorderRecursion(std::vector<TElem> vec);
+    void initPreorder(std::vector<TElem> vec);
+    std::vector<TElem> outputPostorder() const;
+    std::vector<TElem> outputPostorderRecursion() const;
+    std::vector<TElem> outputInorder() const;
+    void debugPrint() const;
+
+private:
+    struct Node {
     public:
-        BinarySearchTree();
-        void initPreorderRecursion(std::vector<TElem> vec);
-        void initPreorder(std::vector<TElem> vec);
-        std::vector<TElem> outputPostorder() const;
-        std::vector<TElem> outputPostorderRecursion() const;
-        std::vector<TElem> outputInorder() const;
+        Node(TElem data);
+        Node();
+
+        void setLeft(Node *left);
+        void setRight(Node *right);
+        const Node *getLeft() const;
+        const Node *getRight() const;
+        const Node *getParent() const;
+        Node *getLeft();
+        Node *getRight();
+        Node *getParent();
+
+        const TElem &getData() const;
+
         void debugPrint() const;
 
     private:
-        struct Node {
-            public:
-                Node(TElem data);
-                Node();
-                
-                void setLeft(Node *left);
-                void setRight(Node *right);
-                const Node *getLeft() const;
-                const Node *getRight() const;
-                const Node *getParent() const;
-                Node *getLeft();
-                Node *getRight();
-                Node *getParent();
+        Node *left_;
+        Node *right_;
+        Node *parent_;
+        TElem data_;
+    };
 
-                const TElem &getData() const;
+    struct NodeTraverse {
+    public:
+        Node *node;
+        bool visited;
+        bool visited_left;
+        bool visited_right;
 
-                void debugPrint() const;
-            private:
-                Node *left_;
-                Node *right_;
-                Node *parent_;
-                TElem data_;
-        };
-        struct NodeTraverse {
-            public:
-                Node *node;
-                bool visited;
-                bool visited_left;
-                bool visited_right;
+        NodeTraverse() :
+            node(nullptr),
+            visited(false),
+            visited_left(false),
+            visited_right(false) {}
 
-                NodeTraverse() : 
-                    node(nullptr), 
-                    visited(false),
-                    visited_left(false),
-                    visited_right(false) {}
-                NodeTraverse(Node *node) :
-                    node(node),
-                    visited(false),
-                    visited_left(false),
-                    visited_right(false) {}
-        };
+        NodeTraverse(Node *node) :
+            node(node),
+            visited(false),
+            visited_left(false),
+            visited_right(false) {}
+    };
 
-        Node *addNode(const TElem &value);
-        Node *initPreorderInnerRecursion(typename std::vector<TElem>::iterator &iter, const TElem &max_value);
-        void initPreorderInnerNoRecursion(std::vector<TElem> vec);
+    Node *addNode(const TElem &value);
+    Node *initPreorderInnerRecursion(typename std::vector<TElem>::iterator &iter, const TElem &max_value);
+    void initPreorderInnerNoRecursion(std::vector<TElem> vec);
 
-        void outputPostorderInnerRecursion(const Node *current, std::vector<TElem> *output) const;
-        std::array<Node, 1024 * 128> nodes_;
-        size_t end_nodes_index_;
-        Node *root_;
+    void outputPostorderInnerRecursion(const Node *current, std::vector<TElem> *output) const;
+    std::array<Node, 1024 * 128> nodes_;
+    size_t end_nodes_index_;
+    Node *root_;
 };
 
 template<typename TElem>
 BinarySearchTree<TElem>::Node::Node() :
     left_(nullptr),
     right_(nullptr),
-    parent_(nullptr), 
+    parent_(nullptr),
     data_(TElem()) {}
 
 template<typename TElem>
 BinarySearchTree<TElem>::Node::Node(TElem data) :
     left_(nullptr),
     right_(nullptr),
-    parent_(nullptr), 
+    parent_(nullptr),
     data_(data) {}
 
 template<typename TElem>
@@ -146,7 +149,7 @@ void BinarySearchTree<TElem>::Node::debugPrint() const {
 
 template<typename TElem>
 const TElem& BinarySearchTree<TElem>::Node::getData() const {
-    return data_;   
+    return data_;
 }
 
 template<typename TElem>
@@ -193,7 +196,6 @@ void BinarySearchTree<TElem>::initPreorderInnerNoRecursion(std::vector<TElem> ve
             current_node = current_node->getParent();
         }
     }
-    //return current_node;
 }
 
 template<typename TElem>
@@ -219,7 +221,7 @@ void BinarySearchTree<TElem>::initPreorder(std::vector<TElem> vec) {
 //            current_node = current_node->getLeft();
 //            continue;
 //        }
-//        
+//
 //        if (*iter < stack.top()) {
 //            stack.push(stack.top());
 //            //current_node->setRight(addNode(*iter++));
