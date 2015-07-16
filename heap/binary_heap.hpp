@@ -40,19 +40,19 @@ class BinaryHeap {
         // Removes element which is located by index, keeping all heap properties
         void RemoveElementByIndex(TIndex index) {
             DeleteElement(index);
-            
+
             if (index < GetSize()) {
                 index = HeapifyUp(index);
                 HeapifyDown(index);
             }
         }
-        
+
         // Number of elements kept in the heap
         unsigned int GetSize() const { return elements_.size(); }
 
     private:
-        bool CompareElements(const TElement &one, const TElement &other) const { 
-            return TComparator() (one, other); 
+        bool CompareElements(const TElement &one, const TElement &other) const {
+            return TComparator() (one, other);
         }
 
         void HeapifyDown(TIndex index);
@@ -72,7 +72,7 @@ class BinaryHeap {
         TIndex GetLeftIndex(TIndex index) { return (index << 1) + 1; }
         TIndex GetRightIndex(TIndex index) { return (index << 1) + 2; }
 
-        // Helper function -- swaps element with index 'index' 
+        // Helper function -- swaps element with index 'index'
         // with last element of the heap,
         // and then removes last element
         void DeleteElement(TIndex index) {
@@ -84,10 +84,10 @@ class BinaryHeap {
         std::vector<TElement> elements_;
 };
 
-template<typename TElement, 
-    typename TComparator, 
-    typename TMoveCallback, 
-    typename TInsertCallback, 
+template<typename TElement,
+    typename TComparator,
+    typename TMoveCallback,
+    typename TInsertCallback,
     typename TDeleteCallback>
 void BinaryHeap<TElement, TComparator, TMoveCallback, TInsertCallback, TDeleteCallback>::HeapifyDown
         (TIndex index) {
@@ -107,10 +107,10 @@ void BinaryHeap<TElement, TComparator, TMoveCallback, TInsertCallback, TDeleteCa
     }
 }
 
-template<typename TElement, 
-    typename TComparator, 
-    typename TMoveCallback, 
-    typename TInsertCallback, 
+template<typename TElement,
+    typename TComparator,
+    typename TMoveCallback,
+    typename TInsertCallback,
     typename TDeleteCallback>
 void BinaryHeap<TElement, TComparator, TMoveCallback, TInsertCallback, TDeleteCallback>::Insert
         (const TElement &element) {
@@ -123,12 +123,12 @@ void BinaryHeap<TElement, TComparator, TMoveCallback, TInsertCallback, TDeleteCa
     HeapifyUp(heap_size);
 }
 
-template<typename TElement, 
-    typename TComparator, 
-    typename TMoveCallback, 
-    typename TInsertCallback, 
+template<typename TElement,
+    typename TComparator,
+    typename TMoveCallback,
+    typename TInsertCallback,
     typename TDeleteCallback>
-typename BinaryHeap<TElement, TComparator, TMoveCallback, TInsertCallback, TDeleteCallback>::TIndex 
+typename BinaryHeap<TElement, TComparator, TMoveCallback, TInsertCallback, TDeleteCallback>::TIndex
 BinaryHeap<TElement, TComparator, TMoveCallback, TInsertCallback, TDeleteCallback>::HeapifyUp
         (TIndex index) {
     TIndex parent_index = GetParentIndex(index);
