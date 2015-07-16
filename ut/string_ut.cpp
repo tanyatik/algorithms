@@ -1,9 +1,10 @@
 #include <gtest/gtest.h>
 
-#include "../aho_corasik.hpp"
-#include "../prefix.hpp"
-#include "../test_helper.hpp"
-#include "../suffix_automata.hpp"
+#include "string/aho_corasik.hpp"
+#include "string/prefix.hpp"
+#include "string/suffix_automata.hpp"
+
+#include "test_helper.hpp"
 
 using namespace algorithms;
 
