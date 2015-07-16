@@ -13,7 +13,7 @@ TEST(geometry, convex_hull_small_square) {
     square.push_back(Point2D{ -1, 1 });
     square.push_back(Point2D{ -1, -1 });
 
-    std::vector<Point2D> convex = convexHull(square);
+    std::vector<Point2D> convex = ConvexHull(square);
     EXPECT_EQ(convex.size(), square.size());
     EXPECT_EQ(convex[0], square[0]);
     EXPECT_EQ(convex[1], square[1]);
@@ -28,7 +28,7 @@ TEST(geometry, convex_hull_small_square) {
     nonConvexFigure.push_back(Point2D{ 1, -1 });
     nonConvexFigure.push_back(Point2D{ 1, 1 });
 
-    convex = convexHull(nonConvexFigure);
+    convex = ConvexHull(nonConvexFigure);
 
     EXPECT_EQ(convex.size(), square.size());
     EXPECT_EQ(convex[0], square[0]);
@@ -50,7 +50,7 @@ TEST(geometry, convex_hull_repeating_points) {
     square.push_back(Point2D{ 2, 2 });
     square.push_back(Point2D{ 0, 2 });
 
-    std::vector<Point2D> convex = convexHull(square);
+    std::vector<Point2D> convex = ConvexHull(square);
     EXPECT_EQ(convex.size(), 4);
     EXPECT_EQ((Point2D{ 0, 0 }), convex[0]);
     EXPECT_EQ((Point2D{ 2, 0 }), convex[1]);
@@ -66,16 +66,16 @@ TEST(geometry, point_inside) {
     square.push_back(Point2D{ 1, 1 });
     square.push_back(Point2D{ 1, -1 });
 
-    EXPECT_TRUE(pointInsidePolygon(Point2D{0, 0}, square));
-    EXPECT_TRUE(pointInsidePolygon(Point2D{0.5, 0.3}, square));
-    EXPECT_TRUE(pointInsidePolygon(Point2D{-0.5, -0.3}, square));
-    EXPECT_TRUE(pointInsidePolygon(Point2D{-0.5, 0.3}, square));
-    EXPECT_TRUE(pointInsidePolygon(Point2D{0.5, -0.3}, square));
+    EXPECT_TRUE(PointInsidePolygon(Point2D{0, 0}, square));
+    EXPECT_TRUE(PointInsidePolygon(Point2D{0.5, 0.3}, square));
+    EXPECT_TRUE(PointInsidePolygon(Point2D{-0.5, -0.3}, square));
+    EXPECT_TRUE(PointInsidePolygon(Point2D{-0.5, 0.3}, square));
+    EXPECT_TRUE(PointInsidePolygon(Point2D{0.5, -0.3}, square));
 
-    EXPECT_FALSE(pointInsidePolygon(Point2D{2, 0}, square));
-    EXPECT_FALSE(pointInsidePolygon(Point2D{2.5, 0.3}, square));
+    EXPECT_FALSE(PointInsidePolygon(Point2D{2, 0}, square));
+    EXPECT_FALSE(PointInsidePolygon(Point2D{2.5, 0.3}, square));
 
-    EXPECT_FALSE(pointInsidePolygon(Point2D{-0.5, -2.3}, square));
-    EXPECT_FALSE(pointInsidePolygon(Point2D{-0.5, 1.3}, square));
-    EXPECT_FALSE(pointInsidePolygon(Point2D{5.5, -0.3}, square));
+    EXPECT_FALSE(PointInsidePolygon(Point2D{-0.5, -2.3}, square));
+    EXPECT_FALSE(PointInsidePolygon(Point2D{-0.5, 1.3}, square));
+    EXPECT_FALSE(PointInsidePolygon(Point2D{5.5, -0.3}, square));
 }

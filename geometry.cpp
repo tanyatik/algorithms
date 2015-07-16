@@ -6,7 +6,7 @@
 
 namespace algorithms {
 
-bool pointInsidePolygon(Point2D point, const std::vector<Point2D>& polygon) {
+bool PointInsidePolygon(Point2D point, const std::vector<Point2D>& polygon) {
     // polygon points should be sorted by angle
 
     Point2D first = *polygon.begin(), second = *(polygon.begin() + 1);
@@ -35,12 +35,12 @@ bool pointInsidePolygon(Point2D point, const std::vector<Point2D>& polygon) {
     return false;
 }
 
-static inline double signedSquare(Point2D a, Point2D b, Point2D c) {
+static inline double SignedSquare(Point2D a, Point2D b, Point2D c) {
     double s = wedgeProduct(a, b, c) / 2.0;
     return s;
 }
 
-double square(const std::vector<Point2D>& points) {
+double Square(const std::vector<Point2D>& points) {
     double square = 0;
     Point2D point = points.front();
     for (auto left = points.begin() + 1, right = left + 1; right != points.end(); ++left, ++right) {
@@ -50,7 +50,7 @@ double square(const std::vector<Point2D>& points) {
 }
 
 
-std::vector<Point2D> convexHull(std::vector<Point2D> points) {
+std::vector<Point2D> ConvexHull(std::vector<Point2D> points) {
     // find leftmost and rightmost points
     using std::pair;
     using std::vector;

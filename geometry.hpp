@@ -19,6 +19,11 @@ static inline bool operator == (const Point2D& one, const Point2D& other) {
     return (one.x == other.x) && (one.y == other.y);
 }
 
+static inline std::ostream& operator << (std::ostream& stream, const Point2D& point) {
+    stream << " (" << point.x << "," << point.y << ") ";
+    return stream;
+}
+
 static inline double wedgeProduct(Point2D a, Point2D b, Point2D c) {
     return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 }
