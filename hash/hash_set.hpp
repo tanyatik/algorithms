@@ -3,12 +3,14 @@
 #include <random>
 #include <algorithm>
 
+namespace algorithms {
+
 class UniversalHashFunctor {
     public:
         UniversalHashFunctor(int a_parameter, int b_parameter, int prime);
         UniversalHashFunctor();
         // result = ( ( a_parameter_ * number + b_parameter_ ) % prime_
-        int operator () (int number) const; 
+        int operator () (int number) const;
 
     private:
         unsigned long long a_parameter_;
@@ -18,19 +20,19 @@ class UniversalHashFunctor {
 
 class FixedSet {
     public:
-        void initialize(const std::vector<int>& elements);
-        bool contains(int element) const;
+        void Init(const std::vector<int>& elements);
+        bool Contains(int element) const;
 
     private:
         static const int PRIME_NUMBER = 2000000011;
-        static const int ADJUST = 1000000000;
+        static const int adjust = 1000000000;
 
         class Bucket {
             public:
-                bool contains(int element) const;
-                void initialize(const std::vector<int> &elements);
+                bool Contains(int element) const;
+                void Init(const std::vector<int> &elements);
             private:
-                int getIndex(int element) const;
+                int GetIndex(int element) const;
 
                 UniversalHashFunctor function_;
                 std::vector<int> elements_;
@@ -38,15 +40,15 @@ class FixedSet {
 
         UniversalHashFunctor function_;
         std::vector<Bucket> buckets_;
-        static int adjustElement(int element);
+        static int AdjustElement(int element);
 
-        int getIndex(int element) const;
+        int GetIndex(int element) const;
 };
 
-UniversalHashFunctor generateUniversalHashFunctor(int prime);
+UniversalHashFunctor GenerateUniversalHashFunctor(int prime);
 
-UniversalHashFunctor::UniversalHashFunctor(int a_parameter, 
-                                           int b_parameter, 
+UniversalHashFunctor::UniversalHashFunctor(int a_parameter,
+                                           int b_parameter,
                                            int prime) :
     a_parameter_(a_parameter),
     b_parameter_(b_parameter),
@@ -59,14 +61,14 @@ UniversalHashFunctor::UniversalHashFunctor() :
 
 int UniversalHashFunctor::operator () (int number) const {
     unsigned long long number_long = number;
-    unsigned long long factor = a_parameter_ * number_long + b_parameter_; 
+    unsigned long long factor = a_parameter_ * number_long + b_parameter_;
 
     unsigned long long result = (factor % prime_);
     return static_cast<int>(result);
 }
 
 
-UniversalHashFunctor generateUniversalHashFunctor(int prime) {
+UniversalHashFunctor GenerateUniversalHashFunctor(int prime) {
     unsigned seed = 237;
     static std::minstd_rand0 generator (seed);
 
@@ -77,7 +79,7 @@ UniversalHashFunctor generateUniversalHashFunctor(int prime) {
 }
 
 
-void FixedSet::Bucket::initialize(const std::vector<int>& elements) {
+void FixedSet::Bucket::Init(const std::vector<int>& elements) {
     if (elements.size() == 0) {
         return;
     } else if (elements.size() == 1) {
@@ -92,12 +94,12 @@ void FixedSet::Bucket::initialize(const std::vector<int>& elements) {
 
     while (!ok_function) {
         elements_.assign(size, 0);
-        function_ = generateUniversalHashFunctor(PRIME_NUMBER);
+        function_ = GenerateUniversalHashFunctor(PRIME_NUMBER);
         ok_function = true;
         occupied_elements.assign(size, false);
 
         for (auto iterator = elements.begin(); iterator != elements.end(); ++iterator) {
-            int result = getIndex(*iterator);
+            int result = GetIndex(*iterator);
             if (occupied_elements[result]) { // collision detected
                 ok_function = false;
                 break;
@@ -109,48 +111,48 @@ void FixedSet::Bucket::initialize(const std::vector<int>& elements) {
     }
 }
 
-bool FixedSet::Bucket::contains(int element) const {
+bool FixedSet::Bucket::Contains(int element) const {
     if (elements_.empty()) {
         return false;
     }
-    int index = getIndex(element);
+    int index = GetIndex(element);
     return (elements_[index] == element);
 }
 
-int FixedSet::Bucket::getIndex(int element) const {
+int FixedSet::Bucket::GetIndex(int element) const {
     return function_(element) % elements_.size();
 }
 
-void FixedSet::initialize(const std::vector<int>& elements) {
+void FixedSet::Init(const std::vector<int>& elements) {
     int size = elements.size();
     std::vector<std::vector <int> > collisions(size);
     buckets_.resize(size);
 
-    function_ = generateUniversalHashFunctor(PRIME_NUMBER);
-    
+    function_ = GenerateUniversalHashFunctor(PRIME_NUMBER);
+
     for (auto iterator = elements.begin(); iterator != elements.end(); ++iterator) {
-        int element = adjustElement(*iterator);
-        int index = getIndex(element);
+        int element = AdjustElement(*iterator);
+        int index = GetIndex(element);
         collisions[index].push_back(element);
     }
 
     for (int bucket_index = 0; bucket_index != size; ++bucket_index) {
-        buckets_[bucket_index].initialize(collisions[bucket_index]);
+        buckets_[bucket_index].Init(collisions[bucket_index]);
     }
 }
 
-int FixedSet::adjustElement(int element) {
-    return element + ADJUST;
+int FixedSet::AdjustElement(int element) {
+    return element + adjust;
 }
 
-bool FixedSet::contains(int element) const {
-    element = adjustElement(element);
-    int index = getIndex(element);
-    return buckets_[index].contains(element);
+bool FixedSet::Contains(int element) const {
+    element = AdjustElement(element);
+    int index = GetIndex(element);
+    return buckets_[index].Contains(element);
 }
 
-int FixedSet::getIndex(int element) const {
+int FixedSet::GetIndex(int element) const {
     return function_(element) % buckets_.size();
 }
 
-
+} // namespace algorithms
