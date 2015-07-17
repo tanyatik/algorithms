@@ -1,6 +1,5 @@
 deps/
 *.o
-*.swp
-*.swo
+.*.sw.
 *.dSYM/
 bin/
