@@ -6,26 +6,25 @@
 
 namespace algorithms {
 
+// polygon points should be sorted clockwise and start from leftmost (and down)
 bool PointInsidePolygon(Point2D point, const std::vector<Point2D>& polygon) {
-    // polygon points should be sorted by angle
 
     Point2D first = *polygon.begin(), second = *(polygon.begin() + 1);
 
     auto left = polygon.begin(), right = polygon.end();
-    double angle = GetAngle(point, first, second);
+    double angle = GetAngle(second, first, point);
 
     while (left < right) {
         if (left + 1 == right) {
-            // found angle
-            return (right == polygon.end()) ? false : !Clockwise(*left, point, *right);
+            return CounterClockwise(*left, point, (right == polygon.end()) ? first : *right);
         }
 
         auto middle = left + (std::distance(left, right))/ 2;
         assert(middle < polygon.end());
 
-        double middleAngle = GetAngle(*middle, first, second);
+        double middleAngle = GetAngle(second, first, *middle);
 
-        if (middleAngle <= angle) {
+        if (middleAngle < angle) {
             left = middle;
         } else {
             right = middle;
