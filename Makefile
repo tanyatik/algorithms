@@ -2,9 +2,9 @@ default: all
 
 CC=g++
 CXXWARN=-Wall
-CXXFLAGS=-O3 -g -std=c++11 -fno-omit-frame-pointer
+CXXFLAGS=-O0 -g -std=c++11 -fno-omit-frame-pointer
 CXXFLAGS+=-I. -isystem ./contrib/gmock
-LDFLAGS=
+LDFLAGS=-g
 LDLIBS=-lpthread -lglog
 
 GTEST_OBJS=contrib/gmock/gmock-gtest-all.o contrib/gmock/gmock_main.o
