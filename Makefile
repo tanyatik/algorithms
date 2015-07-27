@@ -10,8 +10,8 @@ LDLIBS=-lpthread -lglog
 GTEST_OBJS=contrib/gmock/gmock-gtest-all.o contrib/gmock/gmock_main.o
 UT_OBJS=$(patsubst %.cpp,%.o,$(wildcard *_ut.cpp))
 
-LSECTIONS=string math
-HSECTIONS=heap tree hash sort
+LSECTIONS=string math sort
+HSECTIONS=heap tree hash
 
 SECTIONS=$(LSECTIONS) $(HSECTIONS)
 
