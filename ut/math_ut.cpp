@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "math/geometry.hpp"
+#include "math/fft.hpp"
 
 using namespace algorithms;
 
@@ -112,4 +113,75 @@ TEST(geometry, wedge_product) {
     EXPECT_FALSE(CounterClockwise(Point2D{-1, -3}, {-1, -2}, {-1, -1}));
     EXPECT_FALSE(Clockwise(Point2D{-1, -3}, {-1, -2}, {-1, 0}));
     EXPECT_FALSE(CounterClockwise(Point2D{-1, -3}, {-1, -2}, {-1, 0}));
+}
+
+
+TEST(gcd, gcd) {
+    EXPECT_EQ(gcd(1, 1), 1);
+    EXPECT_EQ(gcd(2, 1), 1);
+    EXPECT_EQ(gcd(1, 2), 1);
+    EXPECT_EQ(gcd(2, 3), 1);
+    EXPECT_EQ(gcd(3, 5), 1);
+    EXPECT_EQ(gcd(2, 4), 2);
+    EXPECT_EQ(gcd(12, 4), 4);
+    EXPECT_EQ(gcd(12, 15), 3);
+    EXPECT_EQ(gcd(6, 10), 2);
+    EXPECT_EQ(gcd(15, 10), 5);
+}
+TEST(polynomial_multiply, fft_polynomial_multiply_eq_sizes) {
+    std::vector<int> vec1({int(1), int(2), int(3)}); // polynomial coefficients
+    std::vector<int> vec2({int(3), int(2), int(1)}); // polynomial coefficients
+
+    auto res = algorithms::PolynomialMultiply(vec1, vec2);
+
+    ASSERT_EQ(3, res[0]);
+    ASSERT_EQ(8, res[1]);
+    ASSERT_EQ(14, res[2]);
+    ASSERT_EQ(8, res[3]);
+    ASSERT_EQ(3, res[4]);
+    ASSERT_EQ(0, res[5]);
+    ASSERT_EQ(0, res[6]);
+    ASSERT_EQ(0, res[7]);
+}
+
+
+TEST(polynomial_multiply, fft_polynomial_multiply_neq_sizes) {
+    std::vector<int> vec1({1, 1, 2}); // polynomial coefficients
+    std::vector<int> vec2({1, 2}); // polynomial coefficients
+
+    auto res = algorithms::PolynomialMultiply(vec1, vec2);
+
+    ASSERT_EQ(1, res[0]);
+    ASSERT_EQ(3, res[1]);
+    ASSERT_EQ(4, res[2]);
+    ASSERT_EQ(4, res[3]);
+}
+
+
+TEST(polynomial_multiply, fft_polynomial_multiply_zeros) {
+    std::vector<int> vec1({0, 1, 2}); // polynomial coefficients
+    std::vector<int> vec2({0, 2}); // polynomial coefficients
+
+    auto res = algorithms::PolynomialMultiply(vec1, vec2);
+
+    ASSERT_EQ(0, res[0]);
+    ASSERT_EQ(0, res[1]);
+    ASSERT_EQ(2, res[2]);
+    ASSERT_EQ(4, res[3]);
+}
+
+TEST(polynomial_multiply, fft_polynomial_multiply_neq_sizes_zeros) {
+    std::vector<int> vec1({0, 1, 1, 0, 3}); // polynomial coefficients
+    std::vector<int> vec2({1, 2}); // polynomial coefficients
+
+    auto res = algorithms::PolynomialMultiply(vec1, vec2);
+
+    ASSERT_EQ(0, res[0]);
+    ASSERT_EQ(1, res[1]);
+    ASSERT_EQ(3, res[2]);
+    ASSERT_EQ(2, res[3]);
+    ASSERT_EQ(3, res[4]);
+    ASSERT_EQ(6, res[5]);
+    ASSERT_EQ(0, res[6]);
+    ASSERT_EQ(0, res[7]);
 }
