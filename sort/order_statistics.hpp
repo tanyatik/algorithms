@@ -1,5 +1,8 @@
 #include <algorithm>
 #include <vector>
+#include <assert.h>
+
+namespace algorithms {
 
 // Returns position of median in sequence [begin, end)
 // Does not modify source sequence
@@ -148,3 +151,15 @@ typename V::value_type OrderStatistics(const V &container,
     return OrderStatistics(container.begin(), container.end(), order, comparator);
 }
 
+
+double FindMedianSortedArrays(std::vector<int>& nums1, std::vector<int>& nums2);
+
+static inline double FindMedianArray(std::vector<int>& nums) {
+    if (nums.size() % 2 == 1) {
+        return nums[nums.size() / 2 ];
+    } else {
+        return 0.5 * (nums[nums.size() / 2 - 1] + nums[nums.size() / 2]);
+    }
+}
+
+} // namespae algorithms
