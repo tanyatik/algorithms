@@ -11,18 +11,23 @@ bool PointInsidePolygon(Point2D point, const std::vector<Point2D>& polygon) {
 
     Point2D first = *polygon.begin(), second = *(polygon.begin() + 1);
 
-    auto left = polygon.begin(), right = polygon.end();
+    int left = 0, right = polygon.size();
     double angle = GetAngle(second, first, point);
+
+    std::vector<double> angles;
+    for (const Point2D& point : polygon) {
+        angles.push_back(GetAngle(second, first, point));
+    }
 
     while (left < right) {
         if (left + 1 == right) {
-            return CounterClockwise(*left, point, (right == polygon.end()) ? first : *right);
+            return CounterClockwise(polygon[left], point, (right == polygon.size()) ? first : polygon[right]);
         }
 
-        auto middle = left + (std::distance(left, right))/ 2;
-        assert(middle < polygon.end());
+        int middle = left + (right - left)/ 2;
+        assert(middle < polygon.size());
 
-        double middleAngle = GetAngle(second, first, *middle);
+        double middleAngle = angles[middle];
 
         if (middleAngle < angle) {
             left = middle;
