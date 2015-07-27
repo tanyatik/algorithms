@@ -209,3 +209,32 @@ TEST(non_unique_order_statistics, stress) {
         }
     }
 }
+
+TEST(two_sorted_arrays_median, stress) {
+    const int ITERATIONS = 1;
+    const int LENGTH = 10000;
+    const int MIN = -1000;
+    const int MAX = 1000;
+
+    for (int iteration = 0; iteration < ITERATIONS; ++iteration) {
+        std::default_random_engine generator;
+
+        std::vector<int> sequence = InitRandomVector(&generator, MIN, MAX, LENGTH);
+        std::sort(sequence.begin(), sequence.end());
+
+        double expected_median = FindMedianArray(sequence);
+
+        for (auto separator = sequence.begin(); separator != sequence.end(); ++separator) {
+            std::vector<int> sequence1(sequence.begin(), separator);
+            std::vector<int> sequence2(separator, sequence.end());
+
+            double got_median = FindMedianSortedArrays(sequence1, sequence2);
+
+            EXPECT_EQ(expected_median, got_median);
+        }
+
+        auto empty = std::vector<int>{};
+        double got_median = FindMedianSortedArrays(sequence, empty);
+        EXPECT_EQ(expected_median, got_median);
+    }
+}
