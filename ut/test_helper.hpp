@@ -7,10 +7,10 @@ namespace algorithms {
 
 std::vector<int> InitRandomVector(std::default_random_engine *generator,
         int min_element,
-        int max_element) {
-    const int MAX_ARRAY_SIZE = 10;
+        int max_element,
+        int max_array_size = 10) {
     std::vector<int> vector;
-    for (int i = 0; i < MAX_ARRAY_SIZE; ++i) {
+    for (int i = 0; i < max_array_size; ++i) {
         vector.push_back(std::normal_distribution<int>(min_element, max_element)(*generator));
     }
 
@@ -40,3 +40,4 @@ inline void TestVector(std::vector<T> expected, std::vector<T> result) {
 }
 
 } // namespace algorithms
+
