@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 #include "tree/binary_search_tree.hpp"
+#include "tree/splay_tree.hpp"
 #include "test_helper.hpp"
 
 using namespace algorithms;
@@ -13,6 +14,7 @@ struct TraitsSentinel<int> {
 };
 
 typedef BinarySearchTree<int> BSTree;
+typedef SplayTree<int> STree;
 
 TEST(binary_search_tree, preorder) {
     std::vector<int> keys_preorder{5, 2, 1, 3, 6, 7, 9};
@@ -75,3 +77,108 @@ TEST(binary_search_tree, inorder_postorder) {
     TestVector({2, 4, 4, 10, 10}, inorder);
 }
 
+
+TEST(splay_tree, zig_left) {
+    STree tree;
+    tree.InitPreorder({4, 2, 1, 3, 5});
+
+    tree.Splay(tree.GetRoot()->GetLeft());
+
+    ASSERT_TRUE(tree.IsValid());
+    std::vector<int> preorder = tree.OutputPreorder();
+    TestVector({2, 1, 4, 3, 5}, preorder);
+}
+
+TEST(splay_tree, zig_right) {
+    STree tree;
+    tree.InitPreorder({2, 1, 4, 3, 5});
+
+    tree.Splay(tree.GetRoot()->GetRight());
+
+    ASSERT_TRUE(tree.IsValid());
+    std::vector<int> preorder = tree.OutputPreorder();
+    TestVector({4, 2, 1, 3, 5}, preorder);
+}
+
+TEST(splay_tree, zig_zig_left) {
+    // splaying root
+    STree tree;
+    tree.InitPreorder({6, 4, 2, 1, 3, 5, 7});
+    tree.DebugPrint();
+
+    tree.Splay(tree.GetRoot()->GetLeft()->GetLeft());
+
+    ASSERT_TRUE(tree.IsValid());
+    tree.DebugPrint();
+
+    std::vector<int> preorder = tree.OutputPreorder();
+    TestVector({2, 1, 4, 3, 6, 5, 7}, preorder);
+
+    // splaying no-root
+    STree bigger_tree;
+    bigger_tree.InitPreorder({8, 6, 4, 2, 1, 3, 5, 7, 9});
+    bigger_tree.DebugPrint();
+
+    bigger_tree.Splay(bigger_tree.GetRoot()->GetLeft()->GetLeft()->GetLeft());
+
+    ASSERT_TRUE(bigger_tree.IsValid());
+    bigger_tree.DebugPrint();
+
+    TestVector({8, 2, 1, 4, 3, 6, 5, 7, 9}, bigger_tree.OutputPreorder());
+}
+
+TEST(splay_tree, zig_zig_right) {
+    // splaying root
+    STree tree;
+    tree.InitPreorder({2, 1, 4, 3, 6, 5, 7});
+    tree.DebugPrint();
+
+    tree.Splay(tree.GetRoot()->GetRight()->GetRight());
+
+    ASSERT_TRUE(tree.IsValid());
+    tree.DebugPrint();
+
+    TestVector({6, 4, 2, 1, 3, 5, 7}, tree.OutputPreorder());
+
+
+    // splaying no-root
+    STree bigger_tree;
+    bigger_tree.InitPreorder({8, 2, 1, 4, 3, 6, 5, 7, 9});
+    bigger_tree.DebugPrint();
+
+    bigger_tree.Splay(bigger_tree.GetRoot()->GetLeft()->GetRight()->GetRight());
+
+    ASSERT_TRUE(bigger_tree.IsValid());
+    bigger_tree.DebugPrint();
+
+    TestVector({8, 6, 4, 2, 1, 3, 5, 7, 9}, bigger_tree.OutputPreorder());
+}
+
+
+TEST(splay_tree, zig_zag_left) {
+    // splaying root
+    STree tree;
+    tree.InitPreorder({6, 2, 1, 4, 3, 5, 7});
+    tree.DebugPrint();
+
+    tree.Splay(tree.GetRoot()->GetLeft()->GetRight());
+
+    ASSERT_TRUE(tree.IsValid());
+    tree.DebugPrint();
+
+    TestVector({4, 2, 1, 3, 6, 5, 7}, tree.OutputPreorder());
+}
+
+TEST(splay_tree, zig_zag_right) {
+    // splaying root
+    STree tree;
+    tree.InitPreorder({2, 1, 6, 4, 3, 5, 7});
+    tree.DebugPrint();
+
+    tree.Splay(tree.GetRoot()->GetRight()->GetLeft());
+
+    ASSERT_TRUE(tree.IsValid());
+    tree.DebugPrint();
+
+    TestVector({4, 2, 1, 3, 6, 5, 7}, tree.OutputPreorder());
+}
