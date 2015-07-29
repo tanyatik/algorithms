@@ -2,6 +2,7 @@
 
 #include "math/geometry.hpp"
 #include "math/fft.hpp"
+#include "math/numeric.hpp"
 
 using namespace algorithms;
 
@@ -117,16 +118,16 @@ TEST(geometry, wedge_product) {
 
 
 TEST(gcd, gcd) {
-    EXPECT_EQ(gcd(1, 1), 1);
-    EXPECT_EQ(gcd(2, 1), 1);
-    EXPECT_EQ(gcd(1, 2), 1);
-    EXPECT_EQ(gcd(2, 3), 1);
-    EXPECT_EQ(gcd(3, 5), 1);
-    EXPECT_EQ(gcd(2, 4), 2);
-    EXPECT_EQ(gcd(12, 4), 4);
-    EXPECT_EQ(gcd(12, 15), 3);
-    EXPECT_EQ(gcd(6, 10), 2);
-    EXPECT_EQ(gcd(15, 10), 5);
+    EXPECT_EQ(Gcd(1, 1), 1);
+    EXPECT_EQ(Gcd(2, 1), 1);
+    EXPECT_EQ(Gcd(1, 2), 1);
+    EXPECT_EQ(Gcd(2, 3), 1);
+    EXPECT_EQ(Gcd(3, 5), 1);
+    EXPECT_EQ(Gcd(2, 4), 2);
+    EXPECT_EQ(Gcd(12, 4), 4);
+    EXPECT_EQ(Gcd(12, 15), 3);
+    EXPECT_EQ(Gcd(6, 10), 2);
+    EXPECT_EQ(Gcd(15, 10), 5);
 }
 TEST(polynomial_multiply, fft_polynomial_multiply_eq_sizes) {
     std::vector<int> vec1({int(1), int(2), int(3)}); // polynomial coefficients
