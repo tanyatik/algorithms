@@ -29,9 +29,7 @@ public:
     virtual void Remove(Node* to_remove) {
         throw std::runtime_error("Not implemented");
     }
-    virtual Node* Search(const Elem& elem) {
-        throw std::runtime_error("Not implemented");
-    }
+    virtual Node* Search(const Elem& elem);
 
     Node* GetRoot() const { return root_; }
 
@@ -114,13 +112,17 @@ BinarySearchTree<Elem>::Node::Node(Elem data) :
 template<typename Elem>
 void BinarySearchTree<Elem>::Node::SetLeft(Node *left) {
     left_ = left;
-    left->parent_ = this;
+    if (left) {
+        left->parent_ = this;
+    }
 }
 
 template<typename Elem>
 void BinarySearchTree<Elem>::Node::SetRight(Node *right) {
     right_ = right;
-    right->parent_ = this;
+    if (right) {
+        right->parent_ = this;
+    }
 }
 
 template<typename Elem>
@@ -357,7 +359,25 @@ std::vector<Elem> BinarySearchTree<Elem>::OutputInorder() const {
 
 
 template<typename Elem>
-typename BinarySearchTree<Elem>::Node *BinarySearchTree<Elem>::AddNode(const Elem &value) {
+typename BinarySearchTree<Elem>::Node* BinarySearchTree<Elem>::Search(const Elem& elem) {
+    BinarySearchTree<Elem>::Node* current = root_;
+
+    while (current) {
+        if (current->GetData() == elem) {
+            break;
+        } else if (current->GetData() < elem) {
+            current = current->GetRight();
+        } else {
+            current = current->GetLeft();
+        }
+    }
+
+    return current;
+}
+
+
+template<typename Elem>
+typename BinarySearchTree<Elem>::Node* BinarySearchTree<Elem>::AddNode(const Elem &value) {
     nodes_[end_nodes_index_] = Node(value);
     ++end_nodes_index_;
     return &nodes_[end_nodes_index_ - 1];
@@ -366,7 +386,11 @@ typename BinarySearchTree<Elem>::Node *BinarySearchTree<Elem>::AddNode(const Ele
 template<typename Elem>
 bool BinarySearchTree<Elem>::IsValid() const {
     int min_unused, max_unused;
-    return IsValid(root_, &min_unused, &max_unused);
+    bool valid = IsValid(root_, &min_unused, &max_unused);
+    if (!valid) {
+        DebugPrint();
+    }
+    return valid;
 }
 
 template<typename Elem>
@@ -378,7 +402,7 @@ bool BinarySearchTree<Elem>::IsValid(Node* node, Elem* min_value, Elem* max_valu
 
     Elem minLeft, maxLeft;
     if (node->GetLeft()) {
-        if (!IsValid(node->GetLeft(), &minLeft, &maxLeft) || maxLeft >= node->GetData()) {
+        if (!IsValid(node->GetLeft(), &minLeft, &maxLeft) || maxLeft > node->GetData()) {
             return false;
         } else {
             *min_value = minLeft;
@@ -389,7 +413,7 @@ bool BinarySearchTree<Elem>::IsValid(Node* node, Elem* min_value, Elem* max_valu
 
     int minRight, maxRight;
     if (node->GetRight()) {
-        if (!IsValid(node->GetRight(), &minRight, &maxRight) || minRight <= node->GetData()) {
+        if (!IsValid(node->GetRight(), &minRight, &maxRight) || minRight < node->GetData()) {
             return false;
         } else {
             *max_value = maxRight;

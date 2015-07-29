@@ -78,6 +78,23 @@ TEST(binary_search_tree, inorder_postorder) {
 }
 
 
+TEST(binary_search_tree, search) {
+    BSTree tree;
+    tree.InitPreorder({2, 1, 3});
+
+    ASSERT_EQ(2, tree.Search(2)->GetData());
+    ASSERT_EQ(3, tree.Search(3)->GetData());
+    ASSERT_EQ(1, tree.Search(1)->GetData());
+    ASSERT_EQ(nullptr, tree.Search(4));
+
+    BSTree bigger_tree;
+    tree.InitPreorder({10, 4, 2, 4, 10});
+    ASSERT_EQ(10, tree.Search(10)->GetData());
+    ASSERT_EQ(4, tree.Search(4)->GetData());
+    ASSERT_EQ(nullptr, tree.Search(1));
+}
+
+
 TEST(splay_tree, zig_left) {
     STree tree;
     tree.InitPreorder({4, 2, 1, 3, 5});
@@ -104,12 +121,10 @@ TEST(splay_tree, zig_zig_left) {
     // splaying root
     STree tree;
     tree.InitPreorder({6, 4, 2, 1, 3, 5, 7});
-    tree.DebugPrint();
 
     tree.Splay(tree.GetRoot()->GetLeft()->GetLeft());
 
     ASSERT_TRUE(tree.IsValid());
-    tree.DebugPrint();
 
     std::vector<int> preorder = tree.OutputPreorder();
     TestVector({2, 1, 4, 3, 6, 5, 7}, preorder);
@@ -117,12 +132,10 @@ TEST(splay_tree, zig_zig_left) {
     // splaying no-root
     STree bigger_tree;
     bigger_tree.InitPreorder({8, 6, 4, 2, 1, 3, 5, 7, 9});
-    bigger_tree.DebugPrint();
 
     bigger_tree.Splay(bigger_tree.GetRoot()->GetLeft()->GetLeft()->GetLeft());
 
     ASSERT_TRUE(bigger_tree.IsValid());
-    bigger_tree.DebugPrint();
 
     TestVector({8, 2, 1, 4, 3, 6, 5, 7, 9}, bigger_tree.OutputPreorder());
 }
@@ -131,25 +144,20 @@ TEST(splay_tree, zig_zig_right) {
     // splaying root
     STree tree;
     tree.InitPreorder({2, 1, 4, 3, 6, 5, 7});
-    tree.DebugPrint();
 
     tree.Splay(tree.GetRoot()->GetRight()->GetRight());
 
     ASSERT_TRUE(tree.IsValid());
-    tree.DebugPrint();
-
     TestVector({6, 4, 2, 1, 3, 5, 7}, tree.OutputPreorder());
 
 
     // splaying no-root
     STree bigger_tree;
     bigger_tree.InitPreorder({8, 2, 1, 4, 3, 6, 5, 7, 9});
-    bigger_tree.DebugPrint();
 
     bigger_tree.Splay(bigger_tree.GetRoot()->GetLeft()->GetRight()->GetRight());
 
     ASSERT_TRUE(bigger_tree.IsValid());
-    bigger_tree.DebugPrint();
 
     TestVector({8, 6, 4, 2, 1, 3, 5, 7, 9}, bigger_tree.OutputPreorder());
 }
@@ -159,12 +167,10 @@ TEST(splay_tree, zig_zag_left) {
     // splaying root
     STree tree;
     tree.InitPreorder({6, 2, 1, 4, 3, 5, 7});
-    tree.DebugPrint();
 
     tree.Splay(tree.GetRoot()->GetLeft()->GetRight());
 
     ASSERT_TRUE(tree.IsValid());
-    tree.DebugPrint();
 
     TestVector({4, 2, 1, 3, 6, 5, 7}, tree.OutputPreorder());
 }
@@ -173,12 +179,33 @@ TEST(splay_tree, zig_zag_right) {
     // splaying root
     STree tree;
     tree.InitPreorder({2, 1, 6, 4, 3, 5, 7});
-    tree.DebugPrint();
 
     tree.Splay(tree.GetRoot()->GetRight()->GetLeft());
 
     ASSERT_TRUE(tree.IsValid());
-    tree.DebugPrint();
-
     TestVector({4, 2, 1, 3, 6, 5, 7}, tree.OutputPreorder());
+}
+
+TEST(splay_tree, search) {
+    STree tree;
+    tree.InitPreorder({2, 1, 3});
+    ASSERT_TRUE(tree.IsValid());
+
+    ASSERT_EQ(2, tree.Search(2)->GetData());
+    ASSERT_TRUE(tree.IsValid());
+    ASSERT_EQ(3, tree.Search(3)->GetData());
+    ASSERT_TRUE(tree.IsValid());
+    ASSERT_EQ(1, tree.Search(1)->GetData());
+    ASSERT_TRUE(tree.IsValid());
+    ASSERT_EQ(nullptr, tree.Search(4));
+    ASSERT_TRUE(tree.IsValid());
+
+    BSTree bigger_tree;
+    tree.InitPreorder({10, 4, 2, 4, 10});
+    ASSERT_EQ(10, tree.Search(10)->GetData());
+    ASSERT_TRUE(tree.IsValid());
+    ASSERT_EQ(4, tree.Search(4)->GetData());
+    ASSERT_TRUE(tree.IsValid());
+    ASSERT_EQ(nullptr, tree.Search(1));
+    ASSERT_TRUE(tree.IsValid());
 }

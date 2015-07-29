@@ -8,17 +8,19 @@ template<typename Elem>
 class SplayTree : public BinarySearchTree<Elem> {
 public:
     typedef typename BinarySearchTree<Elem>::Node Node;
-/*
-    virtual Node* Insert(const Elem& elem);
-    virtual void Remove(Node* to_remove);
-    virtual Node* Search(const Elem& elem);
+    // virtual Node* Insert(const Elem& elem);
+    // virtual void Remove(Node* to_remove);
+    virtual Node* Search(const Elem& elem) {
+        Node* found = BinarySearchTree<Elem>::Search(elem);
+        found = Splay(found);
+        return found;
+    }
 
-    */
 public:
     // Move x to the root, performing rotations
-    void Splay(Node* x) {
-        if (x ==  this->root_) {
-            return;
+    Node* Splay(Node* x) {
+        if (!x || x == this->root_) {
+            return x;
         } else if (x->GetParent() == this->root_) { // zig
             Node* prev_root = this->root_;
 
@@ -44,7 +46,6 @@ public:
                 this->root_ = x;
                 this->root_->SetLeft(prev_root);
                 this->root_->SetRight(gamma);
-
             }
         } else {
             Node* parent = x->GetParent();
@@ -115,6 +116,7 @@ public:
                 move_to_root();
             }
         }
+        return this->root_;
     }
     void Merge(Node* left, Node* right);
     void Split(Node* pivot, Node* left, Node* right);
