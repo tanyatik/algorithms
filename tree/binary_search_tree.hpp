@@ -23,9 +23,7 @@ public:
     std::vector<Elem> OutputInorder() const;
     void DebugPrint() const;
 
-    virtual Node* Insert(const Elem& elem) {
-        throw std::runtime_error("Not implemented");
-    }
+    virtual Node* Insert(const Elem& elem);
     virtual void Remove(Node* to_remove) {
         throw std::runtime_error("Not implemented");
     }
@@ -87,6 +85,8 @@ protected:
 
     void OutputPostorderInnerRecursion(const Node *current, std::vector<Elem> *output) const;
     void OutputPreorderInner(const Node *current, std::vector<Elem> *output) const;
+
+    std::pair<Node*, bool> FindElem(const Elem& elem);
 
     bool IsValid(Node* node, Elem* min_val, Elem* max_val) const;
 
@@ -177,6 +177,7 @@ const Elem& BinarySearchTree<Elem>::Node::GetData() const {
 
 template<typename Elem>
 BinarySearchTree<Elem>::BinarySearchTree() {
+    root_ = nullptr;
     end_nodes_index_ = 0;
 }
 
@@ -359,20 +360,61 @@ std::vector<Elem> BinarySearchTree<Elem>::OutputInorder() const {
 
 
 template<typename Elem>
-typename BinarySearchTree<Elem>::Node* BinarySearchTree<Elem>::Search(const Elem& elem) {
-    BinarySearchTree<Elem>::Node* current = root_;
+std::pair<typename BinarySearchTree<Elem>::Node*, bool> BinarySearchTree<Elem>::FindElem(const Elem& elem) {
+    Node* current = root_;
+    Node* prev = root_;
 
     while (current) {
         if (current->GetData() == elem) {
             break;
         } else if (current->GetData() < elem) {
+            prev = current;
             current = current->GetRight();
         } else {
+            prev = current;
             current = current->GetLeft();
         }
     }
 
-    return current;
+    if (current) {
+        return std::make_pair(current, true);
+    } else {
+        return std::make_pair(prev, false);
+    }
+}
+
+
+template<typename Elem>
+typename BinarySearchTree<Elem>::Node* BinarySearchTree<Elem>::Search(const Elem& elem) {
+    auto found = FindElem(elem);
+    if (found.second) {
+        return found.first;
+    } else {
+        return nullptr;
+    }
+}
+
+
+template<typename Elem>
+typename BinarySearchTree<Elem>::Node* BinarySearchTree<Elem>::Insert(const Elem& elem) {
+    auto found = FindElem(elem);
+    if (found.second) {
+        return found.first;
+    } else {
+        Node* parent = found.first;
+        if (!parent) {
+            root_ = new Node(elem);
+            return root_;
+        } else if (elem < parent->GetData()) {
+            assert(!parent->GetLeft());
+            parent->SetLeft(new Node(elem));
+            return parent->GetLeft();
+        } else {
+            assert(!parent->GetRight());
+            parent->SetRight(new Node(elem));
+            return parent->GetRight();
+        }
+    }
 }
 
 

@@ -95,6 +95,30 @@ TEST(binary_search_tree, search) {
 }
 
 
+TEST(binary_search_tree, insert) {
+    BSTree tree;
+
+    tree.Insert(10);
+    ASSERT_EQ(tree.GetRoot(), tree.Search(10));
+    tree.DebugPrint();
+
+    tree.Insert(7);
+    ASSERT_EQ(7, tree.Search(7)->GetData());
+    ASSERT_TRUE(tree.IsValid());
+    tree.DebugPrint();
+
+    tree.Insert(14);
+    ASSERT_EQ(14, tree.Search(14)->GetData());
+    ASSERT_TRUE(tree.IsValid());
+    tree.DebugPrint();
+
+    tree.Insert(3);
+    ASSERT_EQ(3, tree.Search(3)->GetData());
+    ASSERT_TRUE(tree.IsValid());
+    tree.DebugPrint();
+}
+
+
 TEST(splay_tree, zig_left) {
     STree tree;
     tree.InitPreorder({4, 2, 1, 3, 5});
@@ -209,3 +233,5 @@ TEST(splay_tree, search) {
     ASSERT_EQ(nullptr, tree.Search(1));
     ASSERT_TRUE(tree.IsValid());
 }
+
+

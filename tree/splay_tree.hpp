@@ -16,6 +16,12 @@ public:
         return found;
     }
 
+    virtual Node* Insert(const Elem& elem) {
+        Node* inserted = BinarySearchTree<Elem>::Search(elem);
+        inserted = Splay(inserted);
+        return inserted;
+    }
+
 public:
     // Move x to the root, performing rotations
     Node* Splay(Node* x) {
