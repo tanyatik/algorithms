@@ -11,29 +11,27 @@ struct TraitsSentinel;
 
 template<typename Elem>
 class BinarySearchTree {
-protected:
-    struct Node;
 public:
+    struct Node;
+
     BinarySearchTree();
-    void InitPreorderRecursion(std::vector<Elem> vec);
+    virtual ~BinarySearchTree();
+
     void InitPreorder(std::vector<Elem> vec);
     std::vector<Elem> OutputPreorder() const;
     std::vector<Elem> OutputPostorder() const;
-    std::vector<Elem> OutputPostorderRecursion() const;
     std::vector<Elem> OutputInorder() const;
     void DebugPrint() const;
 
     virtual Node* Insert(const Elem& elem);
-    virtual void Remove(Node* to_remove) {
-        throw std::runtime_error("Not implemented");
-    }
+    virtual void Delete(Node* to_remove);
+    virtual void Delete(const Elem& to_remove);
     virtual Node* Search(const Elem& elem);
 
     Node* GetRoot() const { return root_; }
 
     bool IsValid() const;
 
-protected:
     struct Node {
     public:
         Node(Elem data);
@@ -41,6 +39,7 @@ protected:
 
         void SetLeft(Node *left);
         void SetRight(Node *right);
+        void SetParent(Node *parent);
         const Node *GetLeft() const;
         const Node *GetRight() const;
         const Node *GetParent() const;
@@ -49,6 +48,7 @@ protected:
         Node *GetParent();
 
         const Elem &GetData() const;
+        void SwapData(Node *other);
 
         void DebugPrint() const;
 
@@ -59,6 +59,7 @@ protected:
         Elem data_;
     };
 
+protected:
     struct NodeTraverse {
     public:
         Node *node;
@@ -80,18 +81,19 @@ protected:
     };
 
     Node *AddNode(const Elem &value);
-    Node *InitPreorderInnerRecursion(typename std::vector<Elem>::iterator &iter, const Elem &max_value);
-    void InitPreorderInnerNoRecursion(std::vector<Elem> vec);
 
-    void OutputPostorderInnerRecursion(const Node *current, std::vector<Elem> *output) const;
-    void OutputPreorderInner(const Node *current, std::vector<Elem> *output) const;
+    void OutputPreorder(const Node *current, std::vector<Elem> *output) const;
+
+    Node *GetPredecessor(Node* current);
+    Node *GetSuccessor(Node* current);
+
+    void FreeNode(Node* node);
+    void FreeTree(Node* root);
 
     std::pair<Node*, bool> FindElem(const Elem& elem);
 
     bool IsValid(Node* node, Elem* min_val, Elem* max_val) const;
 
-    std::array<Node, 1024/* * 128*/> nodes_;
-    size_t end_nodes_index_;
     Node* root_;
 };
 
@@ -115,6 +117,11 @@ void BinarySearchTree<Elem>::Node::SetLeft(Node *left) {
     if (left) {
         left->parent_ = this;
     }
+}
+
+template<typename Elem>
+void BinarySearchTree<Elem>::Node::SetParent(Node *parent) {
+    parent_ = parent;
 }
 
 template<typename Elem>
@@ -176,21 +183,35 @@ const Elem& BinarySearchTree<Elem>::Node::GetData() const {
 }
 
 template<typename Elem>
+void BinarySearchTree<Elem>::Node::SwapData(Node *other) {
+    using std::swap;
+    swap(data_, other->data_);
+}
+
+
+template<typename Elem>
 BinarySearchTree<Elem>::BinarySearchTree() {
     root_ = nullptr;
-    end_nodes_index_ = 0;
 }
 
 template<typename Elem>
-void BinarySearchTree<Elem>::InitPreorderRecursion(std::vector<Elem> vec) {
-    auto max_sentinel = TraitsSentinel<Elem>::GetMaxSentinel();
-    vec.push_back(max_sentinel);
-    auto iter = vec.begin();
-    root_ = InitPreorderInnerRecursion(iter, max_sentinel);
+BinarySearchTree<Elem>::~BinarySearchTree() {
+    FreeTree(root_);
 }
 
 template<typename Elem>
-void BinarySearchTree<Elem>::InitPreorderInnerNoRecursion(std::vector<Elem> vec) {
+void BinarySearchTree<Elem>::FreeTree(Node* root) {
+    if (root) {
+        FreeTree(root->GetLeft());
+        FreeTree(root->GetRight());
+
+        FreeNode(root);
+    }
+}
+
+
+template<typename Elem>
+void BinarySearchTree<Elem>::InitPreorder(std::vector<Elem> vec) {
     auto max_sentinel = TraitsSentinel<Elem>::GetMaxSentinel();
 
     vec.push_back(max_sentinel);
@@ -223,89 +244,20 @@ void BinarySearchTree<Elem>::InitPreorderInnerNoRecursion(std::vector<Elem> vec)
 }
 
 template<typename Elem>
-void BinarySearchTree<Elem>::InitPreorder(std::vector<Elem> vec) {
-    InitPreorderInnerNoRecursion(vec);
-//    auto max_sentinel = TraitsSentinel<Elem>::getMaxSentinel();
-//    vec.push_back(max_sentinel);
-//
-//    auto iter = vec.begin();
-//    std::stack<Elem> stack;
-//    stack.push(max_sentinel);
-//    //stack.push(*iter);
-//
-//    //root_ = AddNode(*iter++);
-//    Node *current_node = root_;
-//
-//    while(!stack.empty()) {
-//        current_node = AddNode(*iter++);
-//
-//        if (!current_node->GetLeft() && *iter < current_node->GetData()) {
-//            //current_node->SetLeft(AddNode(*iter++));
-//            stack.push(current_node->GetData());
-//            current_node = current_node->GetLeft();
-//            continue;
-//        }
-//
-//        if (*iter < stack.top()) {
-//            stack.push(stack.top());
-//            //current_node->SetRight(AddNode(*iter++));
-//            current_node = current_node->GetRight();
-//            continue;
-//        }
-//        stack.pop();
-//        if (!stack.empty()) {
-//            current_node = current_node->GetParent();
-//        }
-//    }
-}
-
-template<typename Elem>
-typename BinarySearchTree<Elem>::Node *
-BinarySearchTree<Elem>::InitPreorderInnerRecursion(typename std::vector<Elem>::iterator &iter,
-                                           const Elem &max_value) {
-    Node *new_node = AddNode(*iter++);
-    if (*iter < new_node->GetData()) {
-        new_node->SetLeft(InitPreorderInnerRecursion(iter, new_node->GetData()));
-    }
-    if (*iter < max_value) {
-        new_node->SetRight(InitPreorderInnerRecursion(iter, max_value));
-    }
-    return new_node;
-}
-
-template<typename Elem>
-void BinarySearchTree<Elem>::OutputPostorderInnerRecursion(const Node *current, std::vector<Elem> *output) const {
-    if (current->GetLeft()) {
-        OutputPostorderInnerRecursion(current->GetLeft(), output);
-    }
-    if (current->GetRight()) {
-        OutputPostorderInnerRecursion(current->GetRight(), output);
-    }
-    output->push_back(current->GetData());
-}
-
-template<typename Elem>
-std::vector<Elem> BinarySearchTree<Elem>::OutputPostorderRecursion() const {
-    std::vector<Elem> output;
-    OutputPostorderInnerRecursion(root_, &output);
-    return output;
-}
-
-template<typename Elem>
-void BinarySearchTree<Elem>::OutputPreorderInner(const Node* current, std::vector<Elem>* output) const {
+void BinarySearchTree<Elem>::OutputPreorder(const Node* current, std::vector<Elem>* output) const {
     output->push_back(current->GetData());
     if (current->GetLeft()) {
-        OutputPreorderInner(current->GetLeft(), output);
+        OutputPreorder(current->GetLeft(), output);
     }
     if (current->GetRight()) {
-        OutputPreorderInner(current->GetRight(), output);
+        OutputPreorder(current->GetRight(), output);
     }
 }
 
 template<typename Elem>
 std::vector<Elem> BinarySearchTree<Elem>::OutputPreorder() const {
     std::vector<Elem> output;
-    OutputPreorderInner(root_, &output);
+    OutputPreorder(root_, &output);
     return output;
 }
 
@@ -336,7 +288,9 @@ template<typename Elem>
 std::vector<Elem> BinarySearchTree<Elem>::OutputInorder() const {
     std::vector<Elem> output;
     std::stack<NodeTraverse> stack;
-    stack.push(NodeTraverse(root_));
+    if (root_) {
+        stack.push(NodeTraverse(root_));
+    }
 
     while(!stack.empty()) {
         if (stack.top().node->GetLeft() && !stack.top().visited_left) {
@@ -403,26 +357,64 @@ typename BinarySearchTree<Elem>::Node* BinarySearchTree<Elem>::Insert(const Elem
     } else {
         Node* parent = found.first;
         if (!parent) {
-            root_ = new Node(elem);
+            root_ = AddNode(elem);
             return root_;
         } else if (elem < parent->GetData()) {
             assert(!parent->GetLeft());
-            parent->SetLeft(new Node(elem));
+            parent->SetLeft(AddNode(elem));
             return parent->GetLeft();
         } else {
             assert(!parent->GetRight());
-            parent->SetRight(new Node(elem));
+            parent->SetRight(AddNode(elem));
             return parent->GetRight();
         }
+    }
+}
+
+template<typename Elem>
+void BinarySearchTree<Elem>::Delete(const Elem& elem) {
+    typename BinarySearchTree<Elem>::Node* node = Search(elem);
+    Delete(node);
+}
+
+
+template<typename Elem>
+void BinarySearchTree<Elem>::Delete(BinarySearchTree<Elem>::Node* to_delete) {
+    if (!to_delete) {
+        return;
+    }
+    if (!to_delete->GetLeft() || !to_delete->GetRight()) {
+        Node* child = to_delete->GetLeft();
+        if (!child) {
+            child = to_delete->GetRight();
+        }
+
+        if (!child) {
+            FreeNode(to_delete);
+            return;
+        } else if (child && !child->GetLeft() && !child->GetRight()) {
+            to_delete->SwapData(child);
+            FreeNode(child);
+            return;
+        }
+    }
+
+    Node* swap_to = GetPredecessor(to_delete);
+    if (!swap_to) {
+        swap_to = GetSuccessor(to_delete);
+    }
+    if (swap_to) {
+        swap_to->SwapData(to_delete);
+        Delete(swap_to);
     }
 }
 
 
 template<typename Elem>
 typename BinarySearchTree<Elem>::Node* BinarySearchTree<Elem>::AddNode(const Elem &value) {
-    nodes_[end_nodes_index_] = Node(value);
-    ++end_nodes_index_;
-    return &nodes_[end_nodes_index_ - 1];
+    Node* node = new Node(value);
+    // printf("new %llx\n", (unsigned long long) (void*) node);
+    return node;
 }
 
 template<typename Elem>
@@ -444,7 +436,9 @@ bool BinarySearchTree<Elem>::IsValid(Node* node, Elem* min_value, Elem* max_valu
 
     Elem minLeft, maxLeft;
     if (node->GetLeft()) {
-        if (!IsValid(node->GetLeft(), &minLeft, &maxLeft) || maxLeft > node->GetData()) {
+        if (!IsValid(node->GetLeft(), &minLeft, &maxLeft)) {
+            return false;
+        } else if (maxLeft > node->GetData()) {
             return false;
         } else {
             *min_value = minLeft;
@@ -455,7 +449,9 @@ bool BinarySearchTree<Elem>::IsValid(Node* node, Elem* min_value, Elem* max_valu
 
     int minRight, maxRight;
     if (node->GetRight()) {
-        if (!IsValid(node->GetRight(), &minRight, &maxRight) || minRight < node->GetData()) {
+        if (!IsValid(node->GetRight(), &minRight, &maxRight)) {
+            return false;
+        } else if (minRight < node->GetData()) {
             return false;
         } else {
             *max_value = maxRight;
@@ -468,11 +464,54 @@ bool BinarySearchTree<Elem>::IsValid(Node* node, Elem* min_value, Elem* max_valu
 }
 
 template<typename Elem>
+typename BinarySearchTree<Elem>::Node *BinarySearchTree<Elem>::GetPredecessor(Node* node) {
+    Node* current = node->GetLeft();
+    while (current && current->GetRight()) {
+        current = current->GetRight();
+    }
+    return current;
+}
+
+template<typename Elem>
+typename BinarySearchTree<Elem>::Node *BinarySearchTree<Elem>::GetSuccessor(Node* node) {
+    Node* current = node->GetRight();
+    while (current && current->GetLeft()) {
+        current = current->GetLeft();
+    }
+    return current;
+}
+
+template<typename Elem>
+void BinarySearchTree<Elem>::FreeNode(Node* node) {
+    if (!node) {
+        return;
+    }
+    if (node->GetLeft()) {
+        node->GetLeft()->SetParent(nullptr);
+    }
+    if (node->GetRight()) {
+        node->GetRight()->SetParent(nullptr);
+    }
+    if (node->GetParent()) {
+        if (node->GetParent()->GetLeft() == node) {
+            node->GetParent()->SetLeft(nullptr);
+        } else if (node->GetParent()->GetRight() == node) {
+            node->GetParent()->SetRight(nullptr);
+        }
+    } else {
+        delete root_;
+        root_ = nullptr;
+        return;
+    }
+    // printf("delete %llx\n", (unsigned long long) (void*) node);
+    delete node;
+}
+
+template<typename Elem>
 void BinarySearchTree<Elem>::DebugPrint() const {
-//    for(const Node *ptr = nodes_; ptr != end_nodes_; ++ptr) {
-//        ptr->DebugPrint();
-//    }
-    root_->DebugPrint();
+    if (root_) {
+        root_->DebugPrint();
+    }
     std::cout << std::endl;
 }
 
