@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <set>
+#include <random>
 #include <gtest/gtest.h>
 
 #include "tree/binary_search_tree.hpp"
@@ -24,48 +26,52 @@ TEST(binary_search_tree, preorder) {
 }
 
 TEST(binary_search_tree, postorder1) {
-    std::vector<int> keys_preorder{5, 2, 1, 3, 6, 7, 9};
-    BSTree tree;
-    tree.InitPreorderRecursion(keys_preorder);
-    std::vector<int> postorder = tree.OutputPostorderRecursion();
-    TestVector(postorder, {1, 3, 2, 9, 7, 6, 5});
-    std::vector<int> postorder2 = tree.OutputPostorder();
-    TestVector(postorder2, {1, 3, 2, 9, 7, 6, 5});
-}
+    {
+        std::vector<int> keys_preorder{5, 2, 1, 3, 6, 7, 9};
+        BSTree tree;
+        tree.InitPreorder(keys_preorder);
+        std::vector<int> postorder = tree.OutputPostorder();
+        TestVector(postorder, {1, 3, 2, 9, 7, 6, 5});
+        std::vector<int> postorder2 = tree.OutputPostorder();
+        TestVector(postorder2, {1, 3, 2, 9, 7, 6, 5});
+    }
 
-TEST(binary_search_tree, postorder2) {
-    BSTree tree = BSTree();
-    tree.InitPreorderRecursion({4, 2, 1, 3, 6, 5, 7});
-    std::vector<int> postorder = tree.OutputPostorder();
-    TestVector(postorder, {1, 3, 2, 5, 7, 6, 4});
-}
+    {
+        BSTree tree = BSTree();
+        tree.InitPreorder({4, 2, 1, 3, 6, 5, 7});
+        std::vector<int> postorder = tree.OutputPostorder();
+        TestVector(postorder, {1, 3, 2, 5, 7, 6, 4});
+    }
 
-TEST(binary_search_tree, postorder3) {
-    BSTree tree = BSTree();
-    tree.InitPreorderRecursion({5, 3, 2, 3, 5, 6});
-    std::vector<int> postorder = tree.OutputPostorder();
-    TestVector(postorder, {2, 3, 3, 6, 5, 5});
+    {
+        BSTree tree = BSTree();
+        tree.InitPreorder({5, 3, 2, 3, 5, 6});
+        std::vector<int> postorder = tree.OutputPostorder();
+        TestVector(postorder, {2, 3, 3, 6, 5, 5});
+    }
 }
 
 TEST(binary_search_tree, inorder1) {
-    std::vector<int> keys_preorder{5, 2, 1, 3, 6, 7, 9};
-    BSTree tree;
-    tree.InitPreorderRecursion(keys_preorder);
-    std::vector<int> inorder = tree.OutputInorder();
-}
+    {
+        std::vector<int> keys_preorder{5, 2, 1, 3, 6, 7, 9};
+        BSTree tree;
+        tree.InitPreorder(keys_preorder);
+        std::vector<int> inorder = tree.OutputInorder();
+    }
 
-TEST(binary_search_tree, inorder2) {
-    BSTree tree = BSTree();
-    tree.InitPreorderRecursion({4, 2, 1, 3, 6, 5, 7});
-    std::vector<int> inorder = tree.OutputInorder();
-    TestVector(inorder, {1, 2, 3, 4, 5, 6, 7});
-}
+    {
+        BSTree tree = BSTree();
+        tree.InitPreorder({4, 2, 1, 3, 6, 5, 7});
+        std::vector<int> inorder = tree.OutputInorder();
+        TestVector(inorder, {1, 2, 3, 4, 5, 6, 7});
+    }
 
-TEST(binary_search_tree, inorder3) {
-    BSTree tree = BSTree();
-    tree.InitPreorder({5, 3, 2, 3, 5, 6});
-    std::vector<int> inorder = tree.OutputInorder();
-    TestVector({2, 3, 3, 5, 5, 6}, inorder);
+    {
+        BSTree tree = BSTree();
+        tree.InitPreorder({5, 3, 2, 3, 5, 6});
+        std::vector<int> inorder = tree.OutputInorder();
+        TestVector({2, 3, 3, 5, 5, 6}, inorder);
+    }
 }
 
 TEST(binary_search_tree, inorder_postorder) {
@@ -88,10 +94,10 @@ TEST(binary_search_tree, search) {
     ASSERT_EQ(nullptr, tree.Search(4));
 
     BSTree bigger_tree;
-    tree.InitPreorder({10, 4, 2, 4, 10});
-    ASSERT_EQ(10, tree.Search(10)->GetData());
-    ASSERT_EQ(4, tree.Search(4)->GetData());
-    ASSERT_EQ(nullptr, tree.Search(1));
+    bigger_tree.InitPreorder({10, 4, 2, 4, 10});
+    ASSERT_EQ(10, bigger_tree.Search(10)->GetData());
+    ASSERT_EQ(4, bigger_tree.Search(4)->GetData());
+    ASSERT_EQ(nullptr, bigger_tree.Search(1));
 }
 
 
@@ -100,24 +106,116 @@ TEST(binary_search_tree, insert) {
 
     tree.Insert(10);
     ASSERT_EQ(tree.GetRoot(), tree.Search(10));
-    tree.DebugPrint();
 
     tree.Insert(7);
     ASSERT_EQ(7, tree.Search(7)->GetData());
     ASSERT_TRUE(tree.IsValid());
-    tree.DebugPrint();
 
     tree.Insert(14);
     ASSERT_EQ(14, tree.Search(14)->GetData());
     ASSERT_TRUE(tree.IsValid());
-    tree.DebugPrint();
 
     tree.Insert(3);
     ASSERT_EQ(3, tree.Search(3)->GetData());
     ASSERT_TRUE(tree.IsValid());
-    tree.DebugPrint();
 }
 
+TEST(binary_search_tree, delet) {
+    {
+        BSTree tree;
+        tree.Insert(10);
+        tree.Insert(7);
+        tree.Insert(14);
+        tree.Delete(tree.GetRoot()->GetLeft());
+
+        ASSERT_EQ(tree.GetRoot()->GetData(), 10);
+        ASSERT_EQ(tree.GetRoot()->GetRight()->GetData(), 14);
+        ASSERT_TRUE(!tree.GetRoot()->GetLeft());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot()->GetRight());
+        ASSERT_EQ(tree.GetRoot()->GetData(), 10);
+        ASSERT_TRUE(!tree.GetRoot()->GetLeft());
+        ASSERT_TRUE(!tree.GetRoot()->GetRight());
+        ASSERT_TRUE(tree.IsValid());
+    }
+    {
+        BSTree tree;
+        tree.Insert(0);
+        tree.Insert(6);
+        tree.Insert(8);
+        tree.Insert(7);
+
+        tree.Delete(6);
+
+        ASSERT_TRUE(tree.IsValid());
+    }
+
+    {
+        BSTree tree;
+        tree.InitPreorder({6, 5, 1, 4, 3, 2, 10, 7, 9, 8, 11});
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot()->GetRight()->GetRight());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot()->GetRight());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot()->GetLeft());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot()->GetLeft());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot()->GetRight());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot()->GetLeft());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot()->GetRight());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot()->GetRight());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(tree.GetRoot());
+        ASSERT_TRUE(tree.IsValid());
+    }
+}
+
+TEST(binary_search_tree, set) {
+    std::minstd_rand0 generator(std::time(nullptr));
+    std::vector<int> data = InitRandomVector(&generator, -1000, 1000, 1000);
+
+    std::set<int> set;
+    BSTree tree;
+
+    for (int d : data) {
+        tree.Insert(d);
+        set.insert(d);
+
+        ASSERT_TRUE(tree.IsValid());
+        TestVector(tree.OutputInorder(), std::vector<int>(set.begin(), set.end()));
+    }
+
+    std::random_shuffle(data.begin(), data.end());
+
+    for (int d : data) {
+        tree.Delete(d);
+        set.erase(d);
+
+        ASSERT_TRUE(tree.IsValid());
+        TestVector(tree.OutputInorder(), std::vector<int>(set.begin(), set.end()));
+    }
+}
 
 TEST(splay_tree, zig_left) {
     STree tree;
@@ -224,14 +322,13 @@ TEST(splay_tree, search) {
     ASSERT_EQ(nullptr, tree.Search(4));
     ASSERT_TRUE(tree.IsValid());
 
-    BSTree bigger_tree;
-    tree.InitPreorder({10, 4, 2, 4, 10});
-    ASSERT_EQ(10, tree.Search(10)->GetData());
-    ASSERT_TRUE(tree.IsValid());
-    ASSERT_EQ(4, tree.Search(4)->GetData());
-    ASSERT_TRUE(tree.IsValid());
-    ASSERT_EQ(nullptr, tree.Search(1));
-    ASSERT_TRUE(tree.IsValid());
+    STree bigger_tree;
+    bigger_tree.InitPreorder({10, 4, 2, 4, 10});
+    ASSERT_EQ(10, bigger_tree.Search(10)->GetData());
+    ASSERT_TRUE(bigger_tree.IsValid());
+    ASSERT_EQ(4, bigger_tree.Search(4)->GetData());
+    ASSERT_TRUE(bigger_tree.IsValid());
+    ASSERT_EQ(nullptr, bigger_tree.Search(1));
+    ASSERT_TRUE(bigger_tree.IsValid());
 }
-
 
