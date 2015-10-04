@@ -5,13 +5,15 @@
 
 namespace algorithms {
 
-std::vector<int> InitRandomVector(std::default_random_engine *generator,
+template<typename Generator>
+std::vector<int> InitRandomVector(Generator *generator,
         int min_element,
         int max_element,
         int max_array_size = 10) {
     std::vector<int> vector;
     for (int i = 0; i < max_array_size; ++i) {
-        vector.push_back(std::normal_distribution<int>(min_element, max_element)(*generator));
+        int val = std::uniform_int_distribution<int>(min_element, max_element)(*generator);
+        vector.push_back(val);
     }
 
     return vector;
