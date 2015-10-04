@@ -41,14 +41,15 @@ TEST(sorted_insert, random) {
     const int MAX_ELEMENT = 1000;
     const int MAX_ITERATIONS = 10;
 
-    auto generator = std::default_random_engine(std::time(nullptr));
+    auto generator = std::minstd_rand0(std::time(nullptr));
     auto init_vector = InitRandomVector(&generator, MIN_ELEMENT, MAX_ELEMENT);
+    std::sort(init_vector.begin(), init_vector.end());
 
     for (int iteration = 0; iteration < MAX_ITERATIONS; ++iteration) {
         auto vector = init_vector;
         auto expected_vector = init_vector;
 
-        auto element = std::normal_distribution<int>(MIN_ELEMENT, MAX_ELEMENT)(generator);
+        auto element = std::uniform_int_distribution<int>(MIN_ELEMENT, MAX_ELEMENT)(generator);
         expected_vector.insert(expected_vector.begin(), element);
         std::sort(expected_vector.begin(), expected_vector.end());
 
@@ -210,14 +211,37 @@ TEST(non_unique_order_statistics, stress) {
     }
 }
 
+TEST(two_sorted_arrays_median, simple) {
+    {
+        std::vector<int> sequence = {-10, -7, -2, -2, -1, -1, 2, 6, 8, 9}; // InitRandomVector(&generator, MIN, MAX, LENGTH);
+        double expected_median = FindMedianArray(sequence);
+        auto separator  = sequence.begin() + 6;
+        std::vector<int> sequence1(sequence.begin(), separator);
+        std::vector<int> sequence2(separator, sequence.end());
+        double got_median = FindMedianSortedArrays(sequence1, sequence2);
+        EXPECT_EQ(expected_median, got_median);
+    }
+
+    {
+        std::vector<int> sequence = { -10, -10, -10, -10, -9, -9, -9, -9, -8, -8, -8, -8, -8, -8, -7, -7, -7, -6, -6, -6, -5, -5, -5, -5, -5, -5, -5, -5, -5, -4, -4, -4, -4, -4, -3, -3, -3, -3, -3, -3, -3, -3, -2, -2, -2, -2, -2, -2, -1, -1, -1, -1, -1, -1, 0, 0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 3, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 7, 7, 7, 7, 7, 8, 8, 8, 8, 8, 9, 9, 9, 9, 9, 10, 10, 10, 10, 10, 10, 10 };
+
+        double expected_median = FindMedianArray(sequence);
+        auto separator = sequence.begin() + 98;
+        std::vector<int> sequence1(sequence.begin(), separator);
+        std::vector<int> sequence2(separator, sequence.end());
+        double got_median = FindMedianSortedArrays(sequence1, sequence2);
+        EXPECT_EQ(expected_median, got_median);
+    }
+}
+
 TEST(two_sorted_arrays_median, stress) {
     const int ITERATIONS = 1;
-    const int LENGTH = 10000;
-    const int MIN = -1000;
-    const int MAX = 1000;
+    const int LENGTH = 100;
+    const int MIN = -10;
+    const int MAX = 10;
 
     for (int iteration = 0; iteration < ITERATIONS; ++iteration) {
-        std::default_random_engine generator;
+        std::default_random_engine generator(231);
 
         std::vector<int> sequence = InitRandomVector(&generator, MIN, MAX, LENGTH);
         std::sort(sequence.begin(), sequence.end());
@@ -225,12 +249,14 @@ TEST(two_sorted_arrays_median, stress) {
         double expected_median = FindMedianArray(sequence);
 
         for (auto separator = sequence.begin(); separator != sequence.end(); ++separator) {
+            // auto separator  = sequence.begin() + 6;
             std::vector<int> sequence1(sequence.begin(), separator);
             std::vector<int> sequence2(separator, sequence.end());
 
             double got_median = FindMedianSortedArrays(sequence1, sequence2);
 
-            EXPECT_EQ(expected_median, got_median);
+            EXPECT_EQ(expected_median, got_median)
+                << sequence1.size() << " " << sequence2.size() << " " << got_median << "\n";
         }
 
         auto empty = std::vector<int>{};

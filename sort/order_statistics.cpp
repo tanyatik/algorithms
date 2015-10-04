@@ -13,16 +13,25 @@ double FindMedianSortedArrays(std::vector<int>& A, std::vector<int>& B, int left
     }
 
     int i = (left + right) / 2;
-    int j = (n / 2) - i- 1;
+    int j = (n / 2) - i - 1;
 
-    if ((j < 0 || (j < int(B.size()) && (A[i] >= B[j]))) && (j + 1 >= int(B.size()) || (j + 1 >= 0 && A[i] <= B[j + 1]))) {
+    if ((j < 0 || (j < int(B.size()) && (A[i] >= B[j]))) &&             // B[j] <= A[i] <= B[j + 1] if applicable
+        (j + 1 >= int(B.size()) || (j + 1 >= 0 && A[i] <= B[j + 1]))) {
         if (n % 2 == 0) {
-            int prev = (i == 0) ? B[j] : std::max(A[i - 1], B[j]);
+            int prev;
+            if (i == 0 && j >= 0) {
+                prev = B[j];
+            } else if (i >= 0 && j < 0) {
+                prev = A[i - 1];
+            } else {
+                prev = std::max(A[i - 1], B[j]);
+            }
             return 0.5 * (A[i] + prev);
         } else {
             return A[i];
         }
-    } else if ((j < 0 || (j < int(B.size()) && (A[i] >= B[j]))) && (j + 1 < int(B.size())) && A[i] > B[j + 1]) {
+    } else if ((j < 0 || (j < int(B.size()) && (A[i] >= B[j]))) &&      // A[i] > B[j], A[i] > B[j + 1]
+               (j >= 0 && j + 1 < int(B.size()) && A[i] > B[j + 1])) {
         return FindMedianSortedArrays(A, B, left, i - 1);
     } else {
         return FindMedianSortedArrays(A, B, i + 1, right);
