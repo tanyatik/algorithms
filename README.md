@@ -46,7 +46,7 @@ TBD: Knuth-Morris-Pratt
 ## Tree
 [Binary Search Tree (not balanced)](https://github.com/tanyatik/algorithms/blob/master/tree/binary_search_tree.hpp)
 
-TBD: Splay tree
+[Splay Tree](https://github.com/tanyatik/algorithms/blob/master/tree/splay_tree.hpp)
 
 ## Build 
 
