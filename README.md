@@ -21,7 +21,7 @@ All algorithms are written in C++ and are tested (both using unit test and conte
 
 [Convex Hull](https://github.com/tanyatik/algorithms/blob/master/math/geometry.hpp)
 
-TBD: Fast Fourier Transformation
+[Fast Fourier Transformation](https://github.com/tanyatik/algorithms/blob/master/math/fft.hpp)
 
 ## Sorting 
 [Order Statistics (linear time)](https://github.com/tanyatik/algorithms/blob/master/sort/order_statistics.hpp)
@@ -44,7 +44,7 @@ TBD: Knuth-Morris-Pratt
 [Suffix automata](https://github.com/tanyatik/algorithms/blob/master/string/suffix_automata.hpp)
 
 ## Tree
-[Order traverse](https://github.com/tanyatik/algorithms/blob/master/tree/binary_search_tree.hpp)
+[Binary Search Tree (not balanced)](https://github.com/tanyatik/algorithms/blob/master/tree/binary_search_tree.hpp)
 
 TBD: Splay tree
 
