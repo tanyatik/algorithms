@@ -220,6 +220,7 @@ TEST(binary_search_tree, set) {
 TEST(splay_tree, zig_left) {
     STree tree;
     tree.InitPreorder({4, 2, 1, 3, 5});
+    ASSERT_TRUE(tree.IsValid());
 
     tree.Splay(tree.GetRoot()->GetLeft());
 
@@ -254,12 +255,10 @@ TEST(splay_tree, zig_zig_left) {
     // splaying no-root
     STree bigger_tree;
     bigger_tree.InitPreorder({8, 6, 4, 2, 1, 3, 5, 7, 9});
-
     bigger_tree.Splay(bigger_tree.GetRoot()->GetLeft()->GetLeft()->GetLeft());
 
     ASSERT_TRUE(bigger_tree.IsValid());
-
-    TestVector({8, 2, 1, 4, 3, 6, 5, 7, 9}, bigger_tree.OutputPreorder());
+    TestVector({2, 1, 8, 4, 3, 6, 5, 7, 9}, bigger_tree.OutputPreorder());
 }
 
 TEST(splay_tree, zig_zig_right) {
@@ -272,16 +271,13 @@ TEST(splay_tree, zig_zig_right) {
     ASSERT_TRUE(tree.IsValid());
     TestVector({6, 4, 2, 1, 3, 5, 7}, tree.OutputPreorder());
 
-
     // splaying no-root
     STree bigger_tree;
     bigger_tree.InitPreorder({8, 2, 1, 4, 3, 6, 5, 7, 9});
-
     bigger_tree.Splay(bigger_tree.GetRoot()->GetLeft()->GetRight()->GetRight());
 
     ASSERT_TRUE(bigger_tree.IsValid());
-
-    TestVector({8, 6, 4, 2, 1, 3, 5, 7, 9}, bigger_tree.OutputPreorder());
+    TestVector({6, 4, 2, 1, 3, 5, 8, 7, 9}, bigger_tree.OutputPreorder());
 }
 
 
@@ -330,5 +326,78 @@ TEST(splay_tree, search) {
     ASSERT_TRUE(bigger_tree.IsValid());
     ASSERT_EQ(nullptr, bigger_tree.Search(1));
     ASSERT_TRUE(bigger_tree.IsValid());
+}
+
+TEST(splay_tree, delet) {
+    {
+        STree tree;
+        tree.InitPreorder({6, 5, 1, 4, 3, 2, 10, 7, 9, 8, 11});
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(11);
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(10);
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(5);
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(1);
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(6);
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(7);
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(4);
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(8);
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(9);
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(3);
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(2);
+        ASSERT_TRUE(tree.IsValid());
+    }
+    /*
+    {
+        STree tree;
+        tree.Insert(10);
+        tree.Insert(7);
+        tree.Insert(14);
+        tree.Delete(7);
+
+        ASSERT_EQ(tree.GetRoot()->GetData(), 10);
+        ASSERT_EQ(tree.GetRoot()->GetRight()->GetData(), 14);
+        ASSERT_TRUE(!tree.GetRoot()->GetLeft());
+        ASSERT_TRUE(tree.IsValid());
+
+        tree.Delete(14);
+        ASSERT_EQ(tree.GetRoot()->GetData(), 10);
+        ASSERT_TRUE(!tree.GetRoot()->GetLeft());
+        ASSERT_TRUE(!tree.GetRoot()->GetRight());
+        ASSERT_TRUE(tree.IsValid());
+    }
+    {
+        STree tree;
+        tree.Insert(0);
+        tree.Insert(6);
+        tree.Insert(8);
+        tree.Insert(7);
+
+        tree.Delete(6);
+
+        ASSERT_TRUE(tree.IsValid());
+    }
+    */
+
 }
 

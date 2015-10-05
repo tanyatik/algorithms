@@ -15,7 +15,29 @@ public:
     struct Node;
 
     BinarySearchTree();
+    BinarySearchTree(Node* root)
+        : root_(root) {
+        if (root) {
+            root->SetParent(nullptr);
+        }
+    }
     virtual ~BinarySearchTree();
+
+    BinarySearchTree(const BinarySearchTree& other) = delete;
+    BinarySearchTree(BinarySearchTree&& other) {
+        root_ = other.root_;
+        other.root_ = nullptr;
+    }
+
+    BinarySearchTree<Elem>& operator = (const BinarySearchTree<Elem>& other) = delete;
+    BinarySearchTree<Elem>& operator = (BinarySearchTree<Elem>&& other) {
+        if (root_) {
+            FreeTree(root_);
+        }
+        root_ = other.root_;
+        other.root_ = nullptr;
+        return *this;
+    }
 
     void InitPreorder(std::vector<Elem> vec);
     std::vector<Elem> OutputPreorder() const;
@@ -113,6 +135,17 @@ BinarySearchTree<Elem>::Node::Node(Elem data) :
 
 template<typename Elem>
 void BinarySearchTree<Elem>::Node::SetLeft(Node *left) {
+    /*if (left_) {
+        left_->SetParent(nullptr);
+    }
+    if (left && left->GetParent()) {
+        assert(left->GetParent()->GetLeft() == left || left->GetParent()->GetRight() == left);
+        if (left->GetParent()->GetLeft() == left) {
+            left->GetParent()->SetLeft(nullptr);
+        } else if (left->GetParent()->GetRight() == left) {
+            left->GetParent()->SetRight(nullptr);
+        }
+    }*/
     left_ = left;
     if (left) {
         left->parent_ = this;
@@ -126,6 +159,20 @@ void BinarySearchTree<Elem>::Node::SetParent(Node *parent) {
 
 template<typename Elem>
 void BinarySearchTree<Elem>::Node::SetRight(Node *right) {
+    /*
+    if (right_) {
+        right_->SetParent(nullptr);
+    }
+
+    if (right && right->GetParent()) {
+        assert(right->GetParent()->GetLeft() == right || right->GetParent()->GetRight() == right);
+        if (right->GetParent()->GetRight() == right) {
+            right->GetParent()->SetRight(nullptr);
+        } else if (right->GetParent()->GetRight() == right) {
+            right->GetParent()->SetRight(nullptr);
+        }
+    }
+    */
     right_ = right;
     if (right) {
         right->parent_ = this;
@@ -187,7 +234,6 @@ void BinarySearchTree<Elem>::Node::SwapData(Node *other) {
     using std::swap;
     swap(data_, other->data_);
 }
-
 
 template<typename Elem>
 BinarySearchTree<Elem>::BinarySearchTree() {
@@ -434,6 +480,9 @@ bool BinarySearchTree<Elem>::IsValid(Node* node, Elem* min_value, Elem* max_valu
     // *min_value = root->val;
     // *max_value = root->val;
 
+    assert(!node->GetLeft()  || node->GetLeft()->GetParent()  == node);
+    assert(!node->GetRight() || node->GetRight()->GetParent() == node);
+
     Elem minLeft, maxLeft;
     if (node->GetLeft()) {
         if (!IsValid(node->GetLeft(), &minLeft, &maxLeft)) {
@@ -486,6 +535,11 @@ void BinarySearchTree<Elem>::FreeNode(Node* node) {
     if (!node) {
         return;
     }
+    if (node == root_) {
+        delete root_;
+        root_ = nullptr;
+        return;
+    }
     if (node->GetLeft()) {
         node->GetLeft()->SetParent(nullptr);
     }
@@ -498,12 +552,13 @@ void BinarySearchTree<Elem>::FreeNode(Node* node) {
         } else if (node->GetParent()->GetRight() == node) {
             node->GetParent()->SetRight(nullptr);
         }
-    } else {
-        delete root_;
-        root_ = nullptr;
-        return;
     }
-    // printf("delete %llx\n", (unsigned long long) (void*) node);
+    /*
+    printf("delete %llx (%d)\n", (unsigned long long) (void*) node, node->GetData());
+    node->SetLeft(nullptr);
+    node->SetRight(nullptr);
+    node->SetParent(nullptr);
+    */
     delete node;
 }
 
