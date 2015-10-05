@@ -20,16 +20,16 @@ public:
     }
 
     virtual Node* Insert(const Elem& elem) {
-        throw std::runtime_error("Not implemented");
-        /*
-        Node* inserted = BinarySearchTree<Elem>::Search(elem);
+        Node* inserted = BinarySearchTree<Elem>::Insert(elem);
         inserted = Splay(inserted);
         return inserted;
-        */
     }
 
     virtual void Delete(const Elem& elem) {
         Node* to_delete = BinarySearchTree<Elem>::Search(elem);
+        if (!to_delete) {
+            return;
+        }
         to_delete = Splay(to_delete);
         SplayTree<Elem> left_tree(to_delete->GetLeft());
         SplayTree<Elem> right_tree(to_delete->GetRight());
@@ -90,7 +90,6 @@ public:
             };
 
             if (parent_parent->GetLeft() == parent && parent->GetLeft() == x) { // zig-zig left-hand
-                // Node* alpha = x->GetLeft();
                 Node* beta = x->GetRight();
                 Node* gamma = parent->GetRight();
                 Node* delta = parent_parent->GetRight();
@@ -100,11 +99,9 @@ public:
                 parent->SetRight(parent_parent);
                 parent_parent->SetLeft(gamma);
                 parent_parent->SetRight(delta);
-                // x->SetParent(prev_root);
 
                 move_to_root();
             } else if (parent_parent->GetRight() == parent && parent->GetRight() == x) { // zig-zig right-hand
-                // Node* alpha = parent_parent->GetLeft();
                 Node* beta = parent->GetLeft();
                 Node* gamma = x->GetLeft();
                 Node* delta = x->GetRight();
@@ -114,7 +111,6 @@ public:
                 parent->SetRight(gamma);
                 x->SetLeft(parent);
                 x->SetRight(delta);
-                // x->SetParent(prev_root);
 
                 move_to_root();
             } else if (parent_parent->GetLeft() == parent && parent->GetRight() == x) { // zig-zag left-hand
@@ -129,7 +125,6 @@ public:
                 parent_parent->SetRight(delta);
                 x->SetLeft(parent);
                 x->SetRight(parent_parent);
-                // x->SetParent(prev_root);
 
                 move_to_root();
             } else { // zig-zag right-hand
@@ -140,7 +135,6 @@ public:
                 parent->SetLeft(gamma);
                 x->SetLeft(parent_parent);
                 x->SetRight(parent);
-                // x->SetParent(prev_root);
 
                 move_to_root();
             }
@@ -165,8 +159,6 @@ public:
             assert(!max->GetRight());
             Node* right_node = right.GetRoot();
             max->SetRight(right_node);
-
-            // right.GetRoot()
 
             right.root_ = nullptr;
             left.root_ = nullptr;

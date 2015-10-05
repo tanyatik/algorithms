@@ -18,6 +18,31 @@ struct TraitsSentinel<int> {
 typedef BinarySearchTree<int> BSTree;
 typedef SplayTree<int> STree;
 
+void TestTreeLikeSet(BSTree& tree, int test_size = 10000) {
+    std::minstd_rand0 generator(std::time(nullptr));
+    std::vector<int> data = InitRandomVector(&generator, -1000, 1000, test_size);
+
+    std::set<int> set;
+
+    for (int d : data) {
+        tree.Insert(d);
+        set.insert(d);
+
+        ASSERT_TRUE(tree.IsValid());
+        TestVector(tree.OutputInorder(), std::vector<int>(set.begin(), set.end()));
+    }
+
+    std::random_shuffle(data.begin(), data.end());
+
+    for (int d : data) {
+        tree.Delete(d);
+        set.erase(d);
+
+        ASSERT_TRUE(tree.IsValid());
+        TestVector(tree.OutputInorder(), std::vector<int>(set.begin(), set.end()));
+    }
+}
+
 TEST(binary_search_tree, preorder) {
     std::vector<int> keys_preorder{5, 2, 1, 3, 6, 7, 9};
     BSTree tree;
@@ -192,29 +217,8 @@ TEST(binary_search_tree, delet) {
 }
 
 TEST(binary_search_tree, set) {
-    std::minstd_rand0 generator(std::time(nullptr));
-    std::vector<int> data = InitRandomVector(&generator, -1000, 1000, 1000);
-
-    std::set<int> set;
     BSTree tree;
-
-    for (int d : data) {
-        tree.Insert(d);
-        set.insert(d);
-
-        ASSERT_TRUE(tree.IsValid());
-        TestVector(tree.OutputInorder(), std::vector<int>(set.begin(), set.end()));
-    }
-
-    std::random_shuffle(data.begin(), data.end());
-
-    for (int d : data) {
-        tree.Delete(d);
-        set.erase(d);
-
-        ASSERT_TRUE(tree.IsValid());
-        TestVector(tree.OutputInorder(), std::vector<int>(set.begin(), set.end()));
-    }
+    TestTreeLikeSet(tree);
 }
 
 TEST(splay_tree, zig_left) {
@@ -367,7 +371,6 @@ TEST(splay_tree, delet) {
         tree.Delete(2);
         ASSERT_TRUE(tree.IsValid());
     }
-    /*
     {
         STree tree;
         tree.Insert(10);
@@ -397,7 +400,10 @@ TEST(splay_tree, delet) {
 
         ASSERT_TRUE(tree.IsValid());
     }
-    */
+}
 
+TEST(splay_tree, set) {
+    STree tree;
+    TestTreeLikeSet(tree);
 }
 
